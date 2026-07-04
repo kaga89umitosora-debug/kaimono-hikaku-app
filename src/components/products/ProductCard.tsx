@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
@@ -6,17 +6,52 @@ import { ConfirmDialog } from '../common/ConfirmDialog';
 import { ProductFormModal } from './ProductFormModal';
 import type { Product } from '../../types';
 
-export function ProductCard({ product }: { product: Product }) {
-  const { stores, getPrice, setPrice, getCheapestStoreId, setPlanned, updateProduct, removeProduct } =
-    useAppData();
+export function ProductCard({
+  product,
+  autoFocusPrice = false,
+  onAutoFocusHandled,
+}: {
+  product: Product;
+  autoFocusPrice?: boolean;
+  onAutoFocusHandled?: () => void;
+}) {
+  const {
+    stores,
+    getPrice,
+    setPrice,
+    getCheapestStoreId,
+    setPlanned,
+    setPurchaseStore,
+    updateProduct,
+    removeProduct,
+  } = useAppData();
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
+  const firstPriceInputRef = useRef<HTMLInputElement>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
   const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
 
+  const handlePlannedChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setPlanned(product.id, checked);
+    // 購入予定にした瞬間、店舗が未選択ならその時点の最安店舗を初期値として設定する
+    if (checked && !product.purchaseStoreId && cheapestStoreId) {
+      setPurchaseStore(product.id, cheapestStoreId);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoFocusPrice) return;
+    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstPriceInputRef.current?.focus();
+    onAutoFocusHandled?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFocusPrice]);
+
   return (
-    <article className="product-card">
+    <article className="product-card" ref={cardRef}>
       <header className="product-card__header">
         <div>
           <h3>{product.name}</h3>
@@ -26,18 +61,33 @@ export function ProductCard({ product }: { product: Product }) {
           </p>
         </div>
         <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={product.planned}
-            onChange={(e) => setPlanned(product.id, e.target.checked)}
-          />
+          <input type="checkbox" checked={product.planned} onChange={handlePlannedChange} />
           購入予定
         </label>
       </header>
 
+      {product.planned && stores.length > 0 && (
+        <div className="store-picker">
+          <span className="store-picker__label">購入する店舗</span>
+          <div className="store-picker__chips">
+            {stores.map((store) => (
+              <button
+                key={store.id}
+                type="button"
+                className={`store-chip ${product.purchaseStoreId === store.id ? 'is-selected' : ''}`}
+                onClick={() => setPurchaseStore(product.id, store.id)}
+              >
+                {store.name}
+                {store.id === cheapestStoreId && <span className="store-chip__badge">最安</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="product-card__prices">
         {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
-        {stores.map((store) => {
+        {stores.map((store, index) => {
           const price = getPrice(product.id, store.id);
           const isCheapest = price !== undefined && cheapestStoreId === store.id;
           const unitPriceLabel = price !== undefined ? getUnitPriceLabel(price, product.quantity) : null;
@@ -45,6 +95,7 @@ export function ProductCard({ product }: { product: Product }) {
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
               <span className="price-cell__store">{store.name}</span>
               <input
+                ref={index === 0 ? firstPriceInputRef : undefined}
                 type="number"
                 inputMode="decimal"
                 min={0}
@@ -73,6 +124,7 @@ export function ProductCard({ product }: { product: Product }) {
       {editing && (
         <ProductFormModal
           title="商品を編集"
+          productId={product.id}
           initialValue={product}
           onSubmit={(value) => {
             updateProduct(product.id, value);

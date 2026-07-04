@@ -8,6 +8,7 @@ export function ProductComparisonScreen() {
   const { products, addProduct } = useAppData();
   const [keyword, setKeyword] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [autoFocusProductId, setAutoFocusProductId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim();
@@ -30,7 +31,12 @@ export function ProductComparisonScreen() {
 
       <div className="product-list">
         {filtered.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            autoFocusPrice={product.id === autoFocusProductId}
+            onAutoFocusHandled={() => setAutoFocusProductId(null)}
+          />
         ))}
       </div>
 
@@ -38,8 +44,9 @@ export function ProductComparisonScreen() {
         <ProductFormModal
           title="商品を追加"
           onSubmit={(value) => {
-            addProduct(value);
+            const newId = addProduct(value);
             setIsAdding(false);
+            setAutoFocusProductId(newId);
           }}
           onClose={() => setIsAdding(false)}
         />

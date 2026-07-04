@@ -30,7 +30,7 @@ interface AppData {
   removeStore: (id: string) => void;
   moveStore: (id: string, direction: 'up' | 'down') => void;
 
-  addProduct: (input: ProductInput) => void;
+  addProduct: (input: ProductInput) => string;
   updateProduct: (id: string, input: ProductInput) => void;
   removeProduct: (id: string) => void;
   setPlanned: (id: string, planned: boolean) => void;
@@ -98,10 +98,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   };
 
   const addProduct = ({ name, quantity, unit, customUnit }: ProductInput) => {
+    const id = createId();
     setProducts((prev) => [
       ...prev,
       {
-        id: createId(),
+        id,
         name,
         quantity,
         unit,
@@ -111,6 +112,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString(),
       },
     ]);
+    return id;
   };
 
   const updateProduct = (id: string, input: ProductInput) => {
