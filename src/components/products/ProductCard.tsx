@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
@@ -6,29 +6,11 @@ import { ConfirmDialog } from '../common/ConfirmDialog';
 import { ProductFormModal } from './ProductFormModal';
 import type { Product } from '../../types';
 
-export function ProductCard({
-  product,
-  autoFocusPrice = false,
-  onAutoFocusHandled,
-}: {
-  product: Product;
-  autoFocusPrice?: boolean;
-  onAutoFocusHandled?: () => void;
-}) {
-  const {
-    stores,
-    getPrice,
-    setPrice,
-    getCheapestStoreId,
-    setPlanned,
-    setPurchaseStore,
-    updateProduct,
-    removeProduct,
-  } = useAppData();
+export function ProductCard({ product }: { product: Product }) {
+  const { stores, getPrice, setPrice, getCheapestStoreId, setPlanned, setPurchaseStore, removeProduct } =
+    useAppData();
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const cardRef = useRef<HTMLElement>(null);
-  const firstPriceInputRef = useRef<HTMLInputElement>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
   const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
@@ -42,16 +24,8 @@ export function ProductCard({
     }
   };
 
-  useEffect(() => {
-    if (!autoFocusPrice) return;
-    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    firstPriceInputRef.current?.focus();
-    onAutoFocusHandled?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoFocusPrice]);
-
   return (
-    <article className="product-card" ref={cardRef}>
+    <article className="product-card">
       <header className="product-card__header">
         <div>
           <h3>{product.name}</h3>
@@ -59,6 +33,7 @@ export function ProductCard({
             {product.quantity ? `${product.quantity}${unitLabel}` : unitLabel}
             <span className="product-card__updated"> ・更新日 {formatDate(product.updatedAt)}</span>
           </p>
+          {product.comment && <p className="product-card__comment">{product.comment}</p>}
         </div>
         <label className="checkbox">
           <input type="checkbox" checked={product.planned} onChange={handlePlannedChange} />
@@ -87,7 +62,7 @@ export function ProductCard({
 
       <div className="product-card__prices">
         {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
-        {stores.map((store, index) => {
+        {stores.map((store) => {
           const price = getPrice(product.id, store.id);
           const isCheapest = price !== undefined && cheapestStoreId === store.id;
           const unitPriceLabel = price !== undefined ? getUnitPriceLabel(price, product.quantity) : null;
@@ -95,7 +70,6 @@ export function ProductCard({
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
               <span className="price-cell__store">{store.name}</span>
               <input
-                ref={index === 0 ? firstPriceInputRef : undefined}
                 type="number"
                 inputMode="decimal"
                 min={0}
@@ -126,10 +100,6 @@ export function ProductCard({
           title="商品を編集"
           productId={product.id}
           initialValue={product}
-          onSubmit={(value) => {
-            updateProduct(product.id, value);
-            setEditing(false);
-          }}
           onClose={() => setEditing(false)}
         />
       )}

@@ -10,6 +10,7 @@ interface ProductInput {
   quantity: number | null;
   unit: Unit;
   customUnit?: string;
+  comment: string;
 }
 
 interface ManualItemInput {
@@ -97,7 +98,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addProduct = ({ name, quantity, unit, customUnit }: ProductInput) => {
+  const addProduct = ({ name, quantity, unit, customUnit, comment }: ProductInput) => {
     const id = createId();
     setProducts((prev) => [
       ...prev,
@@ -107,6 +108,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         quantity,
         unit,
         customUnit,
+        comment,
         planned: false,
         purchaseStoreId: null,
         updatedAt: new Date().toISOString(),

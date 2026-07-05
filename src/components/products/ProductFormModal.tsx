@@ -3,35 +3,36 @@ import { Modal } from '../common/Modal';
 import { UNIT_OPTIONS } from '../../types';
 import type { Unit } from '../../types';
 import { useAppData } from '../../context/AppDataContext';
+import { scrollAppContentToTop } from '../../utils/scroll';
 
 export interface ProductFormValue {
   name: string;
   quantity: number | null;
   unit: Unit;
   customUnit?: string;
+  comment: string;
 }
 
 export function ProductFormModal({
   title,
   productId,
   initialValue,
-  onSubmit,
   onClose,
 }: {
   title: string;
-  /** 既存商品を編集する場合のみ渡す。指定時は店舗別の価格編集欄も表示する。 */
+  /** 既存商品を編集する場合のみ渡す。未指定なら新規追加として扱う。 */
   productId?: string;
   initialValue?: ProductFormValue;
-  onSubmit: (value: ProductFormValue) => void;
   onClose: () => void;
 }) {
-  const { stores, getPrice, setPrice } = useAppData();
+  const { stores, getPrice, setPrice, addProduct, updateProduct } = useAppData();
   const [name, setName] = useState(initialValue?.name ?? '');
   const [quantity, setQuantity] = useState(
     initialValue?.quantity != null ? String(initialValue.quantity) : ''
   );
   const [unit, setUnit] = useState<Unit>(initialValue?.unit ?? '個');
   const [customUnit, setCustomUnit] = useState(initialValue?.customUnit ?? '');
+  const [comment, setComment] = useState(initialValue?.comment ?? '');
   const [prices, setPrices] = useState<Record<string, string>>(() => {
     if (!productId) return {};
     const initial: Record<string, string> = {};
@@ -60,19 +61,26 @@ export function ProductFormModal({
     if (!trimmedName) return;
     if (unit === 'その他' && !customUnit.trim()) return;
 
-    onSubmit({
+    const input = {
       name: trimmedName,
       quantity: quantity === '' ? null : Number(quantity),
       unit,
       customUnit: unit === 'その他' ? customUnit.trim() : undefined,
-    });
+      comment: comment.trim(),
+    };
 
+    const id = productId ?? addProduct(input);
     if (productId) {
-      for (const store of stores) {
-        const raw = prices[store.id] ?? '';
-        setPrice(productId, store.id, raw === '' ? null : Number(raw));
-      }
+      updateProduct(productId, input);
     }
+
+    for (const store of stores) {
+      const raw = prices[store.id] ?? '';
+      setPrice(id, store.id, raw === '' ? null : Number(raw));
+    }
+
+    scrollAppContentToTop();
+    onClose();
   };
 
   return (
@@ -114,29 +122,34 @@ export function ProductFormModal({
             />
           </label>
         )}
-        {productId && (
-          <div className="form__field">
-            <span>各店舗の価格</span>
-            {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
-            <div className="form__price-list">
-              {stores.map((store) => (
-                <label key={store.id} className="form__price-row">
-                  <span className="form__price-row-store">{store.name}</span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    value={prices[store.id] ?? ''}
-                    placeholder="未入力"
-                    onChange={(e) =>
-                      setPrices((prev) => ({ ...prev, [store.id]: e.target.value }))
-                    }
-                  />
-                </label>
-              ))}
-            </div>
+        <label className="form__field">
+          <span>コメント(任意)</span>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder={'例: 夕方に値引き\n冷凍食品コーナー\nいつも売り切れ'}
+            rows={3}
+          />
+        </label>
+        <div className="form__field">
+          <span>各店舗の価格</span>
+          {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
+          <div className="form__price-list">
+            {stores.map((store) => (
+              <label key={store.id} className="form__price-row">
+                <span className="form__price-row-store">{store.name}</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  value={prices[store.id] ?? ''}
+                  placeholder="未入力"
+                  onChange={(e) => setPrices((prev) => ({ ...prev, [store.id]: e.target.value }))}
+                />
+              </label>
+            ))}
           </div>
-        )}
+        </div>
         <div className="form__actions">
           <button type="button" className="btn btn--ghost" onClick={onClose}>
             キャンセル

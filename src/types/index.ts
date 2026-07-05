@@ -1,6 +1,6 @@
-export type Unit = '個' | 'g' | 'kg' | 'ml' | 'L' | 'その他';
+export type Unit = '個' | 'g' | 'kg' | 'ml' | 'L' | '袋' | 'その他';
 
-export const UNIT_OPTIONS: Unit[] = ['個', 'g', 'kg', 'ml', 'L', 'その他'];
+export const UNIT_OPTIONS: Unit[] = ['個', 'g', 'kg', 'ml', 'L', '袋', 'その他'];
 
 export interface Store {
   id: string;
@@ -21,6 +21,8 @@ export interface Product {
   purchaseStoreId: string | null;
   /** 価格変更時に自動更新されるISO日時 */
   updatedAt: string;
+  /** 店舗ごとではなく商品全体に対するメモ。複数行可、未入力は空文字。 */
+  comment: string;
 }
 
 export interface Price {

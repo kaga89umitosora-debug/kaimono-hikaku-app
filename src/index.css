@@ -248,6 +248,16 @@ select {
   background: var(--surface);
 }
 
+.form__field textarea {
+  min-height: 72px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  resize: vertical;
+}
+
 .form__actions {
   display: flex;
   justify-content: flex-end;
@@ -439,6 +449,16 @@ select {
   font-size: 13px;
   opacity: 0.75;
   margin-top: 2px;
+}
+
+.product-card__comment {
+  font-size: 13px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--bg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .product-card__prices {
