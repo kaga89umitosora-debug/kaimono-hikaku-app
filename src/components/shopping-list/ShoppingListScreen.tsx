@@ -3,6 +3,8 @@ import { useAppData } from '../../context/AppDataContext';
 import { StoreGroupCard } from './StoreGroupCard';
 import { StoreFilterTabs } from './StoreFilterTabs';
 import { AddToShoppingListModal } from './AddToShoppingListModal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
+import { scrollAppContentToTop } from '../../utils/scroll';
 import type { Product, ShoppingListEntry, Store, StoreChangeRequest } from '../../types';
 
 type ResolvedEntry = { entry: ShoppingListEntry; product: Product | null };
@@ -28,9 +30,24 @@ export function ShoppingListScreen({
   onRequestStoreChange: (request: StoreChangeRequest) => void;
   onNavigateToAddProduct: (name: string) => void;
 }) {
-  const { stores, products, manualItems, shoppingListEntries } = useAppData();
+  const { stores, products, manualItems, shoppingListEntries, resetAllShoppingLists } = useAppData();
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [confirmingResetAll, setConfirmingResetAll] = useState(false);
+
+  /**
+   * 買い物リストトップ画面へ戻す際の共通リセット処理。
+   * 「入力中の商品名」「検索候補」「候補商品の選択」「購入店舗の選択」「確認モーダル」は
+   * すべてAddToShoppingListModal内部のstateとして実装されているため、
+   * isAddingItemをfalseにしてモーダルをアンマウントすることでまとめて解除される
+   * (個別にクリアするコードは不要)。
+   * 店舗フィルター(selectedStoreId)はこの段階では意図的に変更しない。
+   * この画面自体は現状handoff用stateを保持していないため、その解除処理は該当なし。
+   */
+  const resetShoppingListView = () => {
+    setIsAddingItem(false);
+    scrollAppContentToTop();
+  };
 
   const visibleStores = selectedStoreId === null ? stores : stores.filter((s) => s.id === selectedStoreId);
 
@@ -63,6 +80,18 @@ export function ShoppingListScreen({
         />
       )}
 
+      {selectedStoreId === null && hasAnyItemAtAll && (
+        <div className="shopping-list__reset-all">
+          <button
+            type="button"
+            className="store-group-card__reset-btn"
+            onClick={() => setConfirmingResetAll(true)}
+          >
+            すべてリセット
+          </button>
+        </div>
+      )}
+
       {!hasItemsForSelection && (
         <p className="empty-hint">
           {selectedStoreId === null
@@ -86,10 +115,27 @@ export function ShoppingListScreen({
       {isAddingItem && (
         <AddToShoppingListModal
           selectedStoreId={selectedStoreId}
-          onClose={() => setIsAddingItem(false)}
+          onClose={resetShoppingListView}
           onNavigateToAddProduct={(name) => {
             setIsAddingItem(false);
             onNavigateToAddProduct(name);
+          }}
+        />
+      )}
+
+      {confirmingResetAll && (
+        <ConfirmDialog
+          title="買い物リストをすべてリセットしますか?"
+          message="すべての店舗の買い物リストをすべて削除しますか?"
+          confirmLabel="すべて削除する"
+          onConfirm={() => {
+            resetAllShoppingLists();
+            setConfirmingResetAll(false);
+            scrollAppContentToTop();
+          }}
+          onCancel={() => {
+            setConfirmingResetAll(false);
+            scrollAppContentToTop();
           }}
         />
       )}

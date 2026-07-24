@@ -423,7 +423,6 @@ select {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  scroll-margin: 16px;
 }
 
 .product-card--highlighted {
@@ -502,10 +501,6 @@ select {
   cursor: pointer;
 }
 
-.price-cell__store:disabled {
-  cursor: default;
-}
-
 .price-cell__store:not(:disabled):active {
   background: var(--cheapest-bg, rgba(0, 0, 0, 0.06));
 }
@@ -515,6 +510,12 @@ select {
   font-weight: 700;
   opacity: 1;
   color: var(--accent);
+}
+
+.price-cell__amount--unset {
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.6;
 }
 
 .price-cell input {
@@ -565,10 +566,34 @@ select {
   font-size: 16px;
 }
 
+.store-group-card__header-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .store-group-card__total {
   font-size: 13px;
   font-weight: 600;
   opacity: 0.8;
+}
+
+.store-group-card__reset-btn {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shopping-list__reset-all {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 .store-group-card__list {
@@ -706,6 +731,16 @@ select {
   font-weight: 600;
   font: inherit;
   cursor: pointer;
+}
+
+.add-list-store-option.is-selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.add-list-store-option.is-selected .add-list-store-option__price {
+  color: inherit;
 }
 
 .add-list-store-option__price {

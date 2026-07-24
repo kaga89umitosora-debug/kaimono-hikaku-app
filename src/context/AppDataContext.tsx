@@ -41,6 +41,10 @@ interface AppData {
   /** 商品比較リストに存在しない「今回だけの商品」を、名前だけで買い物リストへ追加する。 */
   addCustomShoppingListEntry: (customName: string, storeId: string) => void;
   removeShoppingListEntry: (id: string) => void;
+  /** 指定した店舗の買い物リスト(通常商品・今回だけの商品・旧手入力項目)だけをまとめて削除する。 */
+  resetShoppingListForStore: (storeId: string) => void;
+  /** 全店舗の買い物リストをまとめて削除する。Product/Store/Price/価格履歴/コメントは対象外。 */
+  resetAllShoppingLists: () => void;
 }
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -179,6 +183,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setShoppingListEntries((prev) => prev.filter((e) => e.id !== id));
   };
 
+  const resetShoppingListForStore = (storeId: string) => {
+    setShoppingListEntries((prev) => prev.filter((e) => e.storeId !== storeId));
+    setManualItems((prev) => prev.filter((m) => m.storeId !== storeId));
+  };
+
+  const resetAllShoppingLists = () => {
+    setShoppingListEntries([]);
+    setManualItems([]);
+  };
+
   const value = useMemo<AppData>(
     () => ({
       stores: [...stores].sort((a, b) => a.order - b.order),
@@ -201,6 +215,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addToShoppingList,
       addCustomShoppingListEntry,
       removeShoppingListEntry,
+      resetShoppingListForStore,
+      resetAllShoppingLists,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [stores, products, prices, manualItems, shoppingListEntries]

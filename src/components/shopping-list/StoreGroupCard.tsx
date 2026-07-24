@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { scrollAppContentToTop } from '../../utils/scroll';
 import type { ManualListItem, Product, ShoppingListEntry, Store, StoreChangeRequest } from '../../types';
 
 type PendingDelete = { kind: 'entry' | 'manual'; id: string; name: string };
@@ -16,8 +17,9 @@ export function StoreGroupCard({
   manualItems: ManualListItem[];
   onRequestStoreChange: (request: StoreChangeRequest) => void;
 }) {
-  const { getPrice, removeShoppingListEntry, removeManualItem } = useAppData();
+  const { getPrice, removeShoppingListEntry, removeManualItem, resetShoppingListForStore } = useAppData();
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   if (entries.length === 0 && manualItems.length === 0) return null;
 
@@ -29,7 +31,16 @@ export function StoreGroupCard({
     <div className="store-group-card">
       <div className="store-group-card__header">
         <h3>{store.name}</h3>
-        <span className="store-group-card__total">合計 {total.toLocaleString()}円</span>
+        <div className="store-group-card__header-meta">
+          <span className="store-group-card__total">合計 {total.toLocaleString()}円</span>
+          <button
+            type="button"
+            className="store-group-card__reset-btn"
+            onClick={() => setConfirmingReset(true)}
+          >
+            リセット
+          </button>
+        </div>
       </div>
 
       <ul className="store-group-card__list">
@@ -49,7 +60,7 @@ export function StoreGroupCard({
                   {product ? (product.quantity ? `${product.quantity}${unitLabel}` : unitLabel) : ''}
                 </span>
                 <span className="store-group-card__item-amount">
-                  {price !== undefined ? `${price.toLocaleString()}円` : product ? '未入力' : ''}
+                  {price !== undefined ? `${price.toLocaleString()}円` : product ? '価格未設定' : ''}
                 </span>
               </div>
               <div className="store-group-card__item-actions">
@@ -113,6 +124,23 @@ export function StoreGroupCard({
             setPendingDelete(null);
           }}
           onCancel={() => setPendingDelete(null)}
+        />
+      )}
+
+      {confirmingReset && (
+        <ConfirmDialog
+          title="買い物リストをリセットしますか?"
+          message={`${store.name}の買い物リストをすべて削除しますか?`}
+          confirmLabel="すべて削除する"
+          onConfirm={() => {
+            resetShoppingListForStore(store.id);
+            setConfirmingReset(false);
+            scrollAppContentToTop();
+          }}
+          onCancel={() => {
+            setConfirmingReset(false);
+            scrollAppContentToTop();
+          }}
         />
       )}
     </div>

@@ -25,6 +25,7 @@ function App() {
               onStoreChangeHandled={() => setStoreChangeRequest(null)}
               prefillAddName={prefillAddName}
               onPrefillHandled={() => setPrefillAddName(null)}
+              onReturnToShoppingList={() => setScreen('list')}
             />
           )}
           {screen === 'list' && (

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
@@ -10,12 +10,23 @@ import type { Product, Store, StoreChangeRequest } from '../../types';
 export function ProductCard({
   product,
   storeChangeRequest,
-  onStoreChangeHandled,
+  onReturnToTop,
+  onExitStoreChangeMode,
 }: {
   product: Product;
   /** 「他店購入」から遷移してきた場合のみ渡される。この商品カードを強調表示し、タップ挙動を店舗変更モードにする。 */
   storeChangeRequest?: StoreChangeRequest;
-  onStoreChangeHandled?: () => void;
+  /**
+   * 通常の商品比較タブ操作(編集の保存/キャンセル、店舗をタップしての買い物リスト追加)が
+   * 完了した際に、商品比較トップ画面へ戻すための呼び出し。
+   * 「他店購入」から遷移してきた特殊フロー(storeChangeRequestあり)では呼ばない。
+   */
+  onReturnToTop?: () => void;
+  /**
+   * 「他店購入」モードを終了して買い物リストタブのトップへ戻すための呼び出し。
+   * 店舗変更の完了時・キャンセル時のどちらからも同じ処理を使う。
+   */
+  onExitStoreChangeMode?: () => void;
 }) {
   const {
     stores,
@@ -33,18 +44,13 @@ export function ProductCard({
   const [duplicateStoreName, setDuplicateStoreName] = useState<string | null>(null);
   const [pendingMoveStore, setPendingMoveStore] = useState<Store | null>(null);
   const [moveDuplicateStoreName, setMoveDuplicateStoreName] = useState<string | null>(null);
-  const cardRef = useRef<HTMLElement>(null);
+  const [movedNotice, setMovedNotice] = useState<{ productName: string; storeName: string } | null>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
   const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
   const originStoreName = storeChangeRequest
     ? stores.find((s) => s.id === storeChangeRequest.originStoreId)?.name ?? ''
     : '';
-
-  useEffect(() => {
-    if (!storeChangeRequest) return;
-    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [storeChangeRequest]);
 
   const handleTapAdd = (store: Store) => {
     if (storeChangeRequest && store.id !== storeChangeRequest.originStoreId) {
@@ -62,11 +68,20 @@ export function ProductCard({
     }
   };
 
+  // 他店購入モードを終了して買い物リストトップへ戻す(完了時・キャンセル時で共通)
+  const handleCancelStoreChange = () => {
+    setPendingMoveStore(null);
+    setMoveDuplicateStoreName(null);
+    onExitStoreChangeMode?.();
+  };
+
+  const handleMovedNoticeClose = () => {
+    setMovedNotice(null);
+    onExitStoreChangeMode?.();
+  };
+
   return (
-    <article
-      className={`product-card ${storeChangeRequest ? 'product-card--highlighted' : ''}`}
-      ref={cardRef}
-    >
+    <article className={`product-card ${storeChangeRequest ? 'product-card--highlighted' : ''}`}>
       <header className="product-card__header">
         <div>
           <h3>{product.name}</h3>
@@ -91,14 +106,11 @@ export function ProductCard({
           const unitPriceLabel = price !== undefined ? getUnitPriceLabel(price, product.quantity) : null;
           return (
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
-              <button
-                type="button"
-                className="price-cell__store"
-                disabled={price === undefined}
-                onClick={() => handleTapAdd(store)}
-              >
+              <button type="button" className="price-cell__store" onClick={() => handleTapAdd(store)}>
                 {store.name}
-                {price !== undefined && <span className="price-cell__amount">{price}円</span>}
+                <span className={`price-cell__amount ${price === undefined ? 'price-cell__amount--unset' : ''}`}>
+                  {price !== undefined ? `${price}円` : '価格未設定'}
+                </span>
               </button>
               <input
                 type="number"
@@ -121,9 +133,15 @@ export function ProductCard({
         <button type="button" className="btn btn--ghost" onClick={() => setEditing(true)}>
           編集
         </button>
-        <button type="button" className="btn btn--danger-outline" onClick={() => setConfirmingDelete(true)}>
-          削除
-        </button>
+        {storeChangeRequest ? (
+          <button type="button" className="btn btn--ghost" onClick={handleCancelStoreChange}>
+            キャンセル
+          </button>
+        ) : (
+          <button type="button" className="btn btn--danger-outline" onClick={() => setConfirmingDelete(true)}>
+            削除
+          </button>
+        )}
       </div>
 
       {editing && (
@@ -131,7 +149,10 @@ export function ProductCard({
           title="商品を編集"
           productId={product.id}
           initialValue={product}
-          onClose={() => setEditing(false)}
+          onClose={() => {
+            setEditing(false);
+            onReturnToTop?.();
+          }}
         />
       )}
 
@@ -155,6 +176,10 @@ export function ProductCard({
           onConfirm={() => {
             addToShoppingList(product.id, pendingAddStore.id);
             setPendingAddStore(null);
+            // 通常フロー(他店購入モード中ではない)での追加完了時のみ、トップ画面へ戻す
+            if (!storeChangeRequest) {
+              onReturnToTop?.();
+            }
           }}
           onCancel={() => setPendingAddStore(null)}
         />
@@ -179,15 +204,10 @@ export function ProductCard({
           onConfirm={() => {
             removeShoppingListEntry(storeChangeRequest.entryId);
             addToShoppingList(product.id, pendingMoveStore.id);
+            setMovedNotice({ productName: product.name, storeName: pendingMoveStore.name });
             setPendingMoveStore(null);
-            onStoreChangeHandled?.();
           }}
-          onCancel={() => {
-            // キャンセル時は「他店購入」モード自体も終了する(モードが残ると、後で
-            // 別の店舗価格をタップした際に意図せず変更フローになってしまうため)
-            setPendingMoveStore(null);
-            onStoreChangeHandled?.();
-          }}
+          onCancel={handleCancelStoreChange}
         />
       )}
 
@@ -202,6 +222,19 @@ export function ProductCard({
               className="btn btn--primary"
               onClick={() => setMoveDuplicateStoreName(null)}
             >
+              閉じる
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {movedNotice && (
+        <Modal title="買い物リスト" onClose={handleMovedNoticeClose}>
+          <p className="confirm-dialog__message">
+            {movedNotice.productName}を{movedNotice.storeName}の買い物リストへ移動しました。
+          </p>
+          <div className="form__actions">
+            <button type="button" className="btn btn--primary" onClick={handleMovedNoticeClose}>
               閉じる
             </button>
           </div>
