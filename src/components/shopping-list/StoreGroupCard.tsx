@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { ManualItemFormModal } from './ManualItemFormModal';
-import type { ManualListItem, Product, Store } from '../../types';
+import type { ManualListItem, Product, ShoppingListEntry, Store } from '../../types';
 
 export function StoreGroupCard({
   store,
-  products,
+  entries,
   manualItems,
 }: {
   store: Store;
-  products: Product[];
+  entries: { entry: ShoppingListEntry; product: Product }[];
   manualItems: ManualListItem[];
 }) {
-  const { getPrice, markProductPurchased, removeManualItem, addManualItem } = useAppData();
+  const { getPrice, removeShoppingListEntry, removeManualItem, addManualItem } = useAppData();
   const [isAdding, setIsAdding] = useState(false);
 
-  if (products.length === 0 && manualItems.length === 0) return null;
+  if (entries.length === 0 && manualItems.length === 0) return null;
 
   const total =
-    products.reduce((sum, p) => sum + (getPrice(p.id, store.id) ?? 0), 0) +
+    entries.reduce((sum, { product }) => sum + (getPrice(product.id, store.id) ?? 0), 0) +
     manualItems.reduce((sum, m) => sum + m.amount, 0);
 
   return (
@@ -29,13 +29,13 @@ export function StoreGroupCard({
       </div>
 
       <ul className="store-group-card__list">
-        {products.map((product) => {
+        {entries.map(({ entry, product }) => {
           const price = getPrice(product.id, store.id);
           const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
           return (
-            <li key={product.id} className="store-group-card__item">
+            <li key={entry.id} className="store-group-card__item">
               <label className="checkbox">
-                <input type="checkbox" onChange={() => markProductPurchased(product.id)} />
+                <input type="checkbox" onChange={() => removeShoppingListEntry(entry.id)} />
                 <span className="store-group-card__item-name">{product.name}</span>
               </label>
               <span className="store-group-card__item-meta">

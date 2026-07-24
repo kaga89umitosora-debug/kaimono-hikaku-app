@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { ManualListItem, Price, PriceHistoryEntry, Product, Store, Unit } from '../types';
+import type { ManualListItem, Price, PriceHistoryEntry, Product, ShoppingListEntry, Store, Unit } from '../types';
 import { loadState, saveState } from '../utils/storage';
 import { createId } from '../utils/id';
 import { findCheapestStoreId } from '../utils/calculations';
@@ -25,6 +25,7 @@ interface AppData {
   products: Product[];
   prices: Price[];
   manualItems: ManualListItem[];
+  shoppingListEntries: ShoppingListEntry[];
 
   addStore: (name: string) => void;
   renameStore: (id: string, name: string) => void;
@@ -34,9 +35,6 @@ interface AppData {
   addProduct: (input: ProductInput) => string;
   updateProduct: (id: string, input: ProductInput) => void;
   removeProduct: (id: string) => void;
-  setPlanned: (id: string, planned: boolean) => void;
-  setPurchaseStore: (id: string, storeId: string | null) => void;
-  markProductPurchased: (id: string) => void;
 
   getPrice: (productId: string, storeId: string) => number | undefined;
   setPrice: (productId: string, storeId: string, price: number | null) => void;
@@ -44,6 +42,10 @@ interface AppData {
 
   addManualItem: (input: ManualItemInput) => void;
   removeManualItem: (id: string) => void;
+
+  isInShoppingList: (productId: string, storeId: string) => boolean;
+  addToShoppingList: (productId: string, storeId: string) => void;
+  removeShoppingListEntry: (id: string) => void;
 }
 
 const AppDataContext = createContext<AppData | null>(null);
@@ -58,12 +60,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [manualItems, setManualItems] = useState<ManualListItem[]>(() =>
     loadState<ManualListItem[]>('manualListItems', [])
   );
+  const [shoppingListEntries, setShoppingListEntries] = useState<ShoppingListEntry[]>(() =>
+    loadState<ShoppingListEntry[]>('shoppingListEntries', [])
+  );
 
   useEffect(() => saveState('stores', stores), [stores]);
   useEffect(() => saveState('products', products), [products]);
   useEffect(() => saveState('prices', prices), [prices]);
   useEffect(() => saveState('priceHistory', history), [history]);
   useEffect(() => saveState('manualListItems', manualItems), [manualItems]);
+  useEffect(() => saveState('shoppingListEntries', shoppingListEntries), [shoppingListEntries]);
 
   const addStore = (name: string) => {
     setStores((prev) => {
@@ -81,7 +87,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setPrices((prev) => prev.filter((p) => p.storeId !== id));
     setHistory((prev) => prev.filter((h) => h.storeId !== id));
     setManualItems((prev) => prev.filter((m) => m.storeId !== id));
-    setProducts((prev) => prev.map((p) => (p.purchaseStoreId === id ? { ...p, purchaseStoreId: null } : p)));
+    setShoppingListEntries((prev) => prev.filter((e) => e.storeId !== id));
   };
 
   const moveStore = (id: string, direction: 'up' | 'down') => {
@@ -109,8 +115,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         unit,
         customUnit,
         comment,
-        planned: false,
-        purchaseStoreId: null,
         updatedAt: new Date().toISOString(),
       },
     ]);
@@ -125,20 +129,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setPrices((prev) => prev.filter((p) => p.productId !== id));
     setHistory((prev) => prev.filter((h) => h.productId !== id));
-  };
-
-  const setPlanned = (id: string, planned: boolean) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, planned, purchaseStoreId: planned ? p.purchaseStoreId : null } : p))
-    );
-  };
-
-  const setPurchaseStore = (id: string, storeId: string | null) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, purchaseStoreId: storeId } : p)));
-  };
-
-  const markProductPurchased = (id: string) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, planned: false, purchaseStoreId: null } : p)));
+    setShoppingListEntries((prev) => prev.filter((e) => e.productId !== id));
   };
 
   const getPrice = (productId: string, storeId: string) =>
@@ -181,12 +172,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setManualItems((prev) => prev.filter((m) => m.id !== id));
   };
 
+  const isInShoppingList = (productId: string, storeId: string) =>
+    shoppingListEntries.some((e) => e.productId === productId && e.storeId === storeId);
+
+  const addToShoppingList = (productId: string, storeId: string) => {
+    if (isInShoppingList(productId, storeId)) return;
+    setShoppingListEntries((prev) => [...prev, { id: createId(), productId, storeId }]);
+  };
+
+  const removeShoppingListEntry = (id: string) => {
+    setShoppingListEntries((prev) => prev.filter((e) => e.id !== id));
+  };
+
   const value = useMemo<AppData>(
     () => ({
       stores: [...stores].sort((a, b) => a.order - b.order),
       products,
       prices,
       manualItems,
+      shoppingListEntries,
       addStore,
       renameStore,
       removeStore,
@@ -194,17 +198,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addProduct,
       updateProduct,
       removeProduct,
-      setPlanned,
-      setPurchaseStore,
-      markProductPurchased,
       getPrice,
       setPrice,
       getCheapestStoreId,
       addManualItem,
       removeManualItem,
+      isInShoppingList,
+      addToShoppingList,
+      removeShoppingListEntry,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stores, products, prices, manualItems]
+    [stores, products, prices, manualItems, shoppingListEntries]
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

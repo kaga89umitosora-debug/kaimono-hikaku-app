@@ -1,26 +1,35 @@
-import { useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { Modal } from '../common/Modal';
 import { ProductFormModal } from './ProductFormModal';
-import type { Product } from '../../types';
+import type { Product, Store } from '../../types';
 
 export function ProductCard({ product }: { product: Product }) {
-  const { stores, getPrice, setPrice, getCheapestStoreId, setPlanned, setPurchaseStore, removeProduct } =
-    useAppData();
+  const {
+    stores,
+    getPrice,
+    setPrice,
+    getCheapestStoreId,
+    removeProduct,
+    isInShoppingList,
+    addToShoppingList,
+  } = useAppData();
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [pendingAddStore, setPendingAddStore] = useState<Store | null>(null);
+  const [duplicateStoreName, setDuplicateStoreName] = useState<string | null>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
   const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
 
-  const handlePlannedChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setPlanned(product.id, checked);
-    // 購入予定にした瞬間、店舗が未選択ならその時点の最安店舗を初期値として設定する
-    if (checked && !product.purchaseStoreId && cheapestStoreId) {
-      setPurchaseStore(product.id, cheapestStoreId);
+  const handleTapAdd = (store: Store) => {
+    if (isInShoppingList(product.id, store.id)) {
+      setDuplicateStoreName(store.name);
+    } else {
+      setPendingAddStore(store);
     }
   };
 
@@ -35,30 +44,7 @@ export function ProductCard({ product }: { product: Product }) {
           </p>
           {product.comment && <p className="product-card__comment">{product.comment}</p>}
         </div>
-        <label className="checkbox">
-          <input type="checkbox" checked={product.planned} onChange={handlePlannedChange} />
-          購入予定
-        </label>
       </header>
-
-      {product.planned && stores.length > 0 && (
-        <div className="store-picker">
-          <span className="store-picker__label">購入する店舗</span>
-          <div className="store-picker__chips">
-            {stores.map((store) => (
-              <button
-                key={store.id}
-                type="button"
-                className={`store-chip ${product.purchaseStoreId === store.id ? 'is-selected' : ''}`}
-                onClick={() => setPurchaseStore(product.id, store.id)}
-              >
-                {store.name}
-                {store.id === cheapestStoreId && <span className="store-chip__badge">最安</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="product-card__prices">
         {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
@@ -68,7 +54,15 @@ export function ProductCard({ product }: { product: Product }) {
           const unitPriceLabel = price !== undefined ? getUnitPriceLabel(price, product.quantity) : null;
           return (
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
-              <span className="price-cell__store">{store.name}</span>
+              <button
+                type="button"
+                className="price-cell__store"
+                disabled={price === undefined}
+                onClick={() => handleTapAdd(store)}
+              >
+                {store.name}
+                {price !== undefined && <span className="price-cell__amount">{price}円</span>}
+              </button>
               <input
                 type="number"
                 inputMode="decimal"
@@ -114,6 +108,30 @@ export function ProductCard({ product }: { product: Product }) {
           }}
           onCancel={() => setConfirmingDelete(false)}
         />
+      )}
+
+      {pendingAddStore && (
+        <ConfirmDialog
+          title="買い物リストへ追加しますか?"
+          message={`「${product.name}」を${pendingAddStore.name}の買い物リストへ追加しますか?`}
+          confirmLabel="追加する"
+          onConfirm={() => {
+            addToShoppingList(product.id, pendingAddStore.id);
+            setPendingAddStore(null);
+          }}
+          onCancel={() => setPendingAddStore(null)}
+        />
+      )}
+
+      {duplicateStoreName && (
+        <Modal title="買い物リスト" onClose={() => setDuplicateStoreName(null)}>
+          <p className="confirm-dialog__message">すでに登録されています。</p>
+          <div className="form__actions">
+            <button type="button" className="btn btn--primary" onClick={() => setDuplicateStoreName(null)}>
+              閉じる
+            </button>
+          </div>
+        </Modal>
       )}
     </article>
   );

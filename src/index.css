@@ -482,9 +482,35 @@ select {
 }
 
 .price-cell__store {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   font-size: 12px;
   font-weight: 600;
   opacity: 0.8;
+  border: none;
+  background: transparent;
+  padding: 4px 2px;
+  margin: -4px -2px 0;
+  border-radius: 6px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.price-cell__store:disabled {
+  cursor: default;
+}
+
+.price-cell__store:not(:disabled):active {
+  background: var(--cheapest-bg, rgba(0, 0, 0, 0.06));
+}
+
+.price-cell__amount {
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 1;
+  color: var(--accent);
 }
 
 .price-cell input {
@@ -505,54 +531,6 @@ select {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-/* ---- 購入店舗チップ(商品比較画面) ---- */
-
-.store-picker {
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px dashed var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.store-picker__label {
-  font-size: 12px;
-  font-weight: 600;
-  opacity: 0.75;
-}
-
-.store-picker__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.store-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.store-chip.is-selected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-}
-
-.store-chip__badge {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.8;
 }
 
 /* ---- 買い物リスト ---- */

@@ -16,9 +16,6 @@ export interface Product {
   unit: Unit;
   /** unit === 'その他' のときの自由入力表記 */
   customUnit?: string;
-  planned: boolean;
-  /** 画面③で選んだ購入予定の店舗。未選択は null */
-  purchaseStoreId: string | null;
   /** 価格変更時に自動更新されるISO日時 */
   updatedAt: string;
   /** 店舗ごとではなく商品全体に対するメモ。複数行可、未入力は空文字。 */
@@ -48,4 +45,11 @@ export interface ManualListItem {
   name: string;
   quantity: string;
   amount: number;
+}
+
+/** 商品比較画面で店舗価格をタップして買い物リストへ追加した項目。同じ商品×店舗の組み合わせは重複登録しない。 */
+export interface ShoppingListEntry {
+  id: string;
+  productId: string;
+  storeId: string;
 }
