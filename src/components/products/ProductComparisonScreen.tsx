@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { SearchBox } from './SearchBox';
 import { ProductFormModal } from './ProductFormModal';
@@ -23,6 +23,8 @@ export function ProductComparisonScreen({
   onReturnToShoppingList?: () => void;
 }) {
   const { products } = useAppData();
+  // 商品比較画面の最上部の基準位置。resetProductComparisonViewでの復帰先に使う。
+  const topRef = useRef<HTMLDivElement>(null);
   const [keyword, setKeyword] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   // 商品追加モーダルをどこから開いたか。戻り先の画面をここで判別する。
@@ -58,7 +60,7 @@ export function ProductComparisonScreen({
     setIsAdding(false);
     onStoreChangeHandled?.();
     onPrefillHandled?.();
-    scrollAppContentToTop();
+    scrollAppContentToTop(topRef.current);
   };
 
   /**
@@ -94,6 +96,7 @@ export function ProductComparisonScreen({
 
   return (
     <section className="screen">
+      <div ref={topRef} />
       <div className="screen__header">
         <h2>商品比較</h2>
         {!isStoreChangeMode && (
@@ -127,6 +130,18 @@ export function ProductComparisonScreen({
           />
         ))}
       </div>
+
+      {!isStoreChangeMode && filtered.length > 0 && (
+        <div className="product-list__footer">
+          <button
+            type="button"
+            className="btn btn--ghost btn--block"
+            onClick={resetProductComparisonView}
+          >
+            トップ画面に戻る
+          </button>
+        </div>
+      )}
 
       {isAdding && (
         <ProductFormModal

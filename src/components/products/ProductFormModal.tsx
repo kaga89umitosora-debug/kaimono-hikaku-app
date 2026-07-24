@@ -3,7 +3,6 @@ import { Modal } from '../common/Modal';
 import { UNIT_OPTIONS } from '../../types';
 import type { Unit } from '../../types';
 import { useAppData } from '../../context/AppDataContext';
-import { scrollAppContentToTop } from '../../utils/scroll';
 
 export interface ProductFormValue {
   name: string;
@@ -98,7 +97,7 @@ export function ProductFormModal({
       return;
     }
 
-    scrollAppContentToTop();
+    // スクロール処理はonClose側(resetProductComparisonView等)に一本化し、キャンセル時と同じ処理を通す。
     onClose();
   };
 

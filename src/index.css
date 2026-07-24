@@ -11,6 +11,8 @@
   --cheapest-border: #22c55e;
   --accent-shadow: rgba(124, 58, 237, 0.35);
   --shadow: rgba(0, 0, 0, 0.08) 0 4px 12px -2px;
+  /* .bottom-nav のおおよその高さ。モーダル下部の安全余白の計算に使う */
+  --bottom-nav-height: 64px;
 
   --sans: system-ui, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
 
@@ -130,6 +132,14 @@ select {
   color: var(--text);
 }
 
+.btn--block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+}
+
 .btn--danger {
   background: var(--danger);
   color: #fff;
@@ -171,6 +181,8 @@ select {
   align-items: flex-end;
   justify-content: center;
   z-index: 100;
+  /* 背景ページ側が二重にスクロールしないようにする(スクロールはmodal__body側のみ) */
+  overflow: hidden;
 }
 
 @media (min-width: 480px) {
@@ -184,9 +196,13 @@ select {
   border-radius: 16px 16px 0 0;
   width: 100%;
   max-width: 480px;
-  max-height: 90svh;
-  overflow-y: auto;
+  /* 100vhではなくdvhを使い、ブラウザのUI表示状態に応じた実際の表示可能高さに合わせる */
+  max-height: 90dvh;
   box-shadow: var(--shadow);
+  /* ヘッダーを固定し、本文(modal__body)側だけをスクロールさせるための構成 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @media (min-width: 480px) {
@@ -196,6 +212,7 @@ select {
 }
 
 .modal__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -214,7 +231,16 @@ select {
 }
 
 .modal__body {
+  /* flexアイテムのデフォルトmin-height:autoのままだと内容量ぶん伸びてスクロールできなくなるため、
+     0を明示してmodal(max-height指定あり)の中に収まるようスクロール可能にする */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
+  /* 下部固定ナビ・ホームインジケーター・ソフトキーボード等に隠れないよう、
+     保存/キャンセルボタンの下に十分な余白を確保する */
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
 }
 
 .form {
@@ -413,6 +439,12 @@ select {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.product-list__footer {
+  margin-top: 16px;
+  /* 下部固定ナビ・ホームインジケーターと重ならないよう十分な余白を確保する */
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .product-card {
