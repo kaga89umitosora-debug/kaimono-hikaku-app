@@ -17,16 +17,19 @@ export function ProductFormModal({
   title,
   productId,
   initialValue,
+  initialName,
   onClose,
 }: {
   title: string;
   /** 既存商品を編集する場合のみ渡す。未指定なら新規追加として扱う。 */
   productId?: string;
   initialValue?: ProductFormValue;
+  /** 新規追加時、商品名欄に初期入力しておく値(買い物リストからの遷移用)。initialValueがあれば無視される。 */
+  initialName?: string;
   onClose: () => void;
 }) {
   const { stores, getPrice, setPrice, addProduct, updateProduct } = useAppData();
-  const [name, setName] = useState(initialValue?.name ?? '');
+  const [name, setName] = useState(initialValue?.name ?? initialName ?? '');
   const [quantity, setQuantity] = useState(
     initialValue?.quantity != null ? String(initialValue.quantity) : ''
   );

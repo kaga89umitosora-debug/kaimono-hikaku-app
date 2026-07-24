@@ -13,13 +13,6 @@ interface ProductInput {
   comment: string;
 }
 
-interface ManualItemInput {
-  storeId: string;
-  name: string;
-  quantity: string;
-  amount: number;
-}
-
 interface AppData {
   stores: Store[];
   products: Product[];
@@ -40,11 +33,13 @@ interface AppData {
   setPrice: (productId: string, storeId: string, price: number | null) => void;
   getCheapestStoreId: (productId: string) => string | null;
 
-  addManualItem: (input: ManualItemInput) => void;
+  /** 旧・買い物リスト手入力項目の削除のみ残す(新規追加は廃止、既存データの後方互換用)。 */
   removeManualItem: (id: string) => void;
 
   isInShoppingList: (productId: string, storeId: string) => boolean;
   addToShoppingList: (productId: string, storeId: string) => void;
+  /** 商品比較リストに存在しない「今回だけの商品」を、名前だけで買い物リストへ追加する。 */
+  addCustomShoppingListEntry: (customName: string, storeId: string) => void;
   removeShoppingListEntry: (id: string) => void;
 }
 
@@ -164,10 +159,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return findCheapestStoreId(productPrices, product.quantity);
   };
 
-  const addManualItem = (input: ManualItemInput) => {
-    setManualItems((prev) => [...prev, { id: createId(), ...input }]);
-  };
-
   const removeManualItem = (id: string) => {
     setManualItems((prev) => prev.filter((m) => m.id !== id));
   };
@@ -178,6 +169,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const addToShoppingList = (productId: string, storeId: string) => {
     if (isInShoppingList(productId, storeId)) return;
     setShoppingListEntries((prev) => [...prev, { id: createId(), productId, storeId }]);
+  };
+
+  const addCustomShoppingListEntry = (customName: string, storeId: string) => {
+    setShoppingListEntries((prev) => [...prev, { id: createId(), productId: null, storeId, customName }]);
   };
 
   const removeShoppingListEntry = (id: string) => {
@@ -201,10 +196,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       getPrice,
       setPrice,
       getCheapestStoreId,
-      addManualItem,
       removeManualItem,
       isInShoppingList,
       addToShoppingList,
+      addCustomShoppingListEntry,
       removeShoppingListEntry,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

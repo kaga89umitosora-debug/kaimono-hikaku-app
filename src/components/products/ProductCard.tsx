@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
 import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Modal } from '../common/Modal';
 import { ProductFormModal } from './ProductFormModal';
-import type { Product, Store } from '../../types';
+import type { Product, Store, StoreChangeRequest } from '../../types';
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  storeChangeRequest,
+  onStoreChangeHandled,
+}: {
+  product: Product;
+  /** 「他店購入」から遷移してきた場合のみ渡される。この商品カードを強調表示し、タップ挙動を店舗変更モードにする。 */
+  storeChangeRequest?: StoreChangeRequest;
+  onStoreChangeHandled?: () => void;
+}) {
   const {
     stores,
     getPrice,
@@ -16,16 +25,36 @@ export function ProductCard({ product }: { product: Product }) {
     removeProduct,
     isInShoppingList,
     addToShoppingList,
+    removeShoppingListEntry,
   } = useAppData();
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [pendingAddStore, setPendingAddStore] = useState<Store | null>(null);
   const [duplicateStoreName, setDuplicateStoreName] = useState<string | null>(null);
+  const [pendingMoveStore, setPendingMoveStore] = useState<Store | null>(null);
+  const [moveDuplicateStoreName, setMoveDuplicateStoreName] = useState<string | null>(null);
+  const cardRef = useRef<HTMLElement>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
   const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
+  const originStoreName = storeChangeRequest
+    ? stores.find((s) => s.id === storeChangeRequest.originStoreId)?.name ?? ''
+    : '';
+
+  useEffect(() => {
+    if (!storeChangeRequest) return;
+    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [storeChangeRequest]);
 
   const handleTapAdd = (store: Store) => {
+    if (storeChangeRequest && store.id !== storeChangeRequest.originStoreId) {
+      if (isInShoppingList(product.id, store.id)) {
+        setMoveDuplicateStoreName(store.name);
+      } else {
+        setPendingMoveStore(store);
+      }
+      return;
+    }
     if (isInShoppingList(product.id, store.id)) {
       setDuplicateStoreName(store.name);
     } else {
@@ -34,7 +63,10 @@ export function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <article className="product-card">
+    <article
+      className={`product-card ${storeChangeRequest ? 'product-card--highlighted' : ''}`}
+      ref={cardRef}
+    >
       <header className="product-card__header">
         <div>
           <h3>{product.name}</h3>
@@ -43,6 +75,11 @@ export function ProductCard({ product }: { product: Product }) {
             <span className="product-card__updated"> ・更新日 {formatDate(product.updatedAt)}</span>
           </p>
           {product.comment && <p className="product-card__comment">{product.comment}</p>}
+          {storeChangeRequest && (
+            <p className="product-card__move-hint">
+              {originStoreName}から購入する店舗を変更する場合は、他の店舗をタップしてください。
+            </p>
+          )}
         </div>
       </header>
 
@@ -128,6 +165,43 @@ export function ProductCard({ product }: { product: Product }) {
           <p className="confirm-dialog__message">すでに登録されています。</p>
           <div className="form__actions">
             <button type="button" className="btn btn--primary" onClick={() => setDuplicateStoreName(null)}>
+              閉じる
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {pendingMoveStore && storeChangeRequest && (
+        <ConfirmDialog
+          title="購入店舗を変更しますか?"
+          message={`「${product.name}」の購入店舗を\n${originStoreName}から${pendingMoveStore.name}へ変更しますか?`}
+          confirmLabel="変更する"
+          onConfirm={() => {
+            removeShoppingListEntry(storeChangeRequest.entryId);
+            addToShoppingList(product.id, pendingMoveStore.id);
+            setPendingMoveStore(null);
+            onStoreChangeHandled?.();
+          }}
+          onCancel={() => {
+            // キャンセル時は「他店購入」モード自体も終了する(モードが残ると、後で
+            // 別の店舗価格をタップした際に意図せず変更フローになってしまうため)
+            setPendingMoveStore(null);
+            onStoreChangeHandled?.();
+          }}
+        />
+      )}
+
+      {moveDuplicateStoreName && (
+        <Modal title="買い物リスト" onClose={() => setMoveDuplicateStoreName(null)}>
+          <p className="confirm-dialog__message">
+            この商品は、すでに{moveDuplicateStoreName}の買い物リストへ登録されています。
+          </p>
+          <div className="form__actions">
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setMoveDuplicateStoreName(null)}
+            >
               閉じる
             </button>
           </div>

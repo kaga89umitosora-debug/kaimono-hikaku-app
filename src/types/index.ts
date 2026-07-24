@@ -38,7 +38,10 @@ export interface PriceHistoryEntry {
   changedAt: string;
 }
 
-/** 画面③限定の手入力項目。商品比較DBとは独立して管理する。 */
+/**
+ * 買い物リスト限定の旧手入力項目(第6回で新規追加の入口は廃止)。
+ * 既存データの表示・削除のためだけに型・保存領域を残している。
+ */
 export interface ManualListItem {
   id: string;
   storeId: string;
@@ -47,9 +50,22 @@ export interface ManualListItem {
   amount: number;
 }
 
-/** 商品比較画面で店舗価格をタップして買い物リストへ追加した項目。同じ商品×店舗の組み合わせは重複登録しない。 */
+/**
+ * 買い物リストの1項目。
+ * 通常商品: productId に商品比較リストの商品IDを持つ。
+ * 今回だけの商品: productId は null、customName に入力した商品名を持つ(商品比較リストとは無関係)。
+ * 同じ商品(productId)×店舗の組み合わせは重複登録しない(today-only商品はこの制約の対象外)。
+ */
 export interface ShoppingListEntry {
   id: string;
-  productId: string;
   storeId: string;
+  productId: string | null;
+  customName?: string;
+}
+
+/** 「他店購入」操作で、商品比較画面へ渡す遷移リクエスト(永続化しないUI状態)。 */
+export interface StoreChangeRequest {
+  entryId: string;
+  productId: string;
+  originStoreId: string;
 }

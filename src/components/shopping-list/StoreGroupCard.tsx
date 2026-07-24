@@ -1,24 +1,28 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/AppDataContext';
-import { ManualItemFormModal } from './ManualItemFormModal';
-import type { ManualListItem, Product, ShoppingListEntry, Store } from '../../types';
+import { ConfirmDialog } from '../common/ConfirmDialog';
+import type { ManualListItem, Product, ShoppingListEntry, Store, StoreChangeRequest } from '../../types';
+
+type PendingDelete = { kind: 'entry' | 'manual'; id: string; name: string };
 
 export function StoreGroupCard({
   store,
   entries,
   manualItems,
+  onRequestStoreChange,
 }: {
   store: Store;
-  entries: { entry: ShoppingListEntry; product: Product }[];
+  entries: { entry: ShoppingListEntry; product: Product | null }[];
   manualItems: ManualListItem[];
+  onRequestStoreChange: (request: StoreChangeRequest) => void;
 }) {
-  const { getPrice, removeShoppingListEntry, removeManualItem, addManualItem } = useAppData();
-  const [isAdding, setIsAdding] = useState(false);
+  const { getPrice, removeShoppingListEntry, removeManualItem } = useAppData();
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   if (entries.length === 0 && manualItems.length === 0) return null;
 
   const total =
-    entries.reduce((sum, { product }) => sum + (getPrice(product.id, store.id) ?? 0), 0) +
+    entries.reduce((sum, { product }) => sum + (product ? getPrice(product.id, store.id) ?? 0 : 0), 0) +
     manualItems.reduce((sum, m) => sum + m.amount, 0);
 
   return (
@@ -30,46 +34,85 @@ export function StoreGroupCard({
 
       <ul className="store-group-card__list">
         {entries.map(({ entry, product }) => {
-          const price = getPrice(product.id, store.id);
-          const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
+          const displayName = product ? product.name : entry.customName || '(名称未設定)';
+          const price = product ? getPrice(product.id, store.id) : undefined;
+          const unitLabel = product
+            ? product.unit === 'その他'
+              ? product.customUnit || 'その他'
+              : product.unit
+            : '';
           return (
             <li key={entry.id} className="store-group-card__item">
-              <label className="checkbox">
-                <input type="checkbox" onChange={() => removeShoppingListEntry(entry.id)} />
-                <span className="store-group-card__item-name">{product.name}</span>
-              </label>
-              <span className="store-group-card__item-meta">
-                {product.quantity ? `${product.quantity}${unitLabel}` : unitLabel}
-              </span>
-              <span className="store-group-card__item-amount">
-                {price !== undefined ? `${price.toLocaleString()}円` : '未入力'}
-              </span>
+              <div className="store-group-card__item-main">
+                <span className="store-group-card__item-name">{displayName}</span>
+                <span className="store-group-card__item-meta">
+                  {product ? (product.quantity ? `${product.quantity}${unitLabel}` : unitLabel) : ''}
+                </span>
+                <span className="store-group-card__item-amount">
+                  {price !== undefined ? `${price.toLocaleString()}円` : product ? '未入力' : ''}
+                </span>
+              </div>
+              <div className="store-group-card__item-actions">
+                {product && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() =>
+                      onRequestStoreChange({
+                        entryId: entry.id,
+                        productId: product.id,
+                        originStoreId: store.id,
+                      })
+                    }
+                  >
+                    他店購入
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn--danger-outline"
+                  onClick={() => setPendingDelete({ kind: 'entry', id: entry.id, name: displayName })}
+                >
+                  削除
+                </button>
+              </div>
             </li>
           );
         })}
         {manualItems.map((item) => (
           <li key={item.id} className="store-group-card__item">
-            <label className="checkbox">
-              <input type="checkbox" onChange={() => removeManualItem(item.id)} />
+            <div className="store-group-card__item-main">
               <span className="store-group-card__item-name">{item.name}</span>
-            </label>
-            <span className="store-group-card__item-meta">{item.quantity}</span>
-            <span className="store-group-card__item-amount">{item.amount.toLocaleString()}円</span>
+              <span className="store-group-card__item-meta">{item.quantity}</span>
+              <span className="store-group-card__item-amount">{item.amount.toLocaleString()}円</span>
+            </div>
+            <div className="store-group-card__item-actions">
+              <button
+                type="button"
+                className="btn btn--danger-outline"
+                onClick={() => setPendingDelete({ kind: 'manual', id: item.id, name: item.name })}
+              >
+                削除
+              </button>
+            </div>
           </li>
         ))}
       </ul>
 
-      <button type="button" className="btn btn--ghost" onClick={() => setIsAdding(true)}>
-        + 商品を追加
-      </button>
-
-      {isAdding && (
-        <ManualItemFormModal
-          onSubmit={(input) => {
-            addManualItem({ storeId: store.id, ...input });
-            setIsAdding(false);
+      {pendingDelete && (
+        <ConfirmDialog
+          title="買い物リストから削除しますか?"
+          message={`「${pendingDelete.name}」を買い物リストから削除しますか?`}
+          confirmLabel="削除する"
+          onConfirm={() => {
+            if (pendingDelete.kind === 'entry') {
+              removeShoppingListEntry(pendingDelete.id);
+            } else {
+              removeManualItem(pendingDelete.id);
+            }
+            setPendingDelete(null);
           }}
-          onClose={() => setIsAdding(false)}
+          onCancel={() => setPendingDelete(null)}
         />
       )}
     </div>
