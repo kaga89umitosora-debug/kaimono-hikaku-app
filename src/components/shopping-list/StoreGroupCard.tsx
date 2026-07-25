@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppData } from '../../context/AppDataContext';
+import { useAppData } from '../../context/useAppData';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { scrollAppContentToTop } from '../../utils/scroll';
 import type { ManualListItem, Product, ShoppingListEntry, Store, StoreChangeRequest } from '../../types';

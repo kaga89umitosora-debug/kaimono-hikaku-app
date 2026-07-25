@@ -35,7 +35,7 @@ export function BackupRestoreSection() {
 
   return (
     <section className="backup-section">
-      <h3>データのバックアップ(テスト用)</h3>
+      <h3>データのバックアップ・復元</h3>
       <p className="backup-section__hint">
         店舗・商品・価格などのデータをJSONファイルに書き出し/読み込みできます。
       </p>

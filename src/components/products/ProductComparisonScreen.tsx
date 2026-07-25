@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useAppData } from '../../context/AppDataContext';
+import { useAppData } from '../../context/useAppData';
 import { SearchBox } from './SearchBox';
 import { ProductFormModal } from './ProductFormModal';
 import { ProductCard } from './ProductCard';
 import { scrollAppContentToTop } from '../../utils/scroll';
+import { sortMatchesByRelevance } from '../../utils/search';
 import type { StoreChangeRequest } from '../../types';
 
 export function ProductComparisonScreen({
@@ -29,6 +30,32 @@ export function ProductComparisonScreen({
   const [isAdding, setIsAdding] = useState(false);
   // 商品追加モーダルをどこから開いたか。戻り先の画面をここで判別する。
   const [addOrigin, setAddOrigin] = useState<'normal' | 'shopping-list'>('normal');
+  // 追加直後の商品ID。「✅ 登録しました」を該当カードに一定時間だけ表示するのに使う。
+  const [justAddedProductId, setJustAddedProductId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!justAddedProductId) return;
+    const timer = setTimeout(() => setJustAddedProductId(null), 2500);
+    return () => clearTimeout(timer);
+  }, [justAddedProductId]);
+
+  // 追加した商品カードが検索フィルターや一覧下部で見えない位置にあっても、
+  // 一覧の再描画(検索クリア反映)を待ってから確実にスクロールして表示する。
+  useEffect(() => {
+    if (!justAddedProductId) return;
+    const id = justAddedProductId;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-product-id="${CSS.escape(id)}"]`);
+        el?.scrollIntoView({ behavior: 'auto', block: 'center' });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [justAddedProductId]);
 
   const isStoreChangeMode = !!storeChangeRequest;
 
@@ -64,6 +91,25 @@ export function ProductComparisonScreen({
   };
 
   /**
+   * 通常フローでの商品追加モーダルのキャンセル。商品は登録せずモーダルを閉じるだけで、
+   * トップへは自動で戻さない(編集のキャンセルと同じ考え方)。
+   */
+  const handleAddCancel = () => {
+    setIsAdding(false);
+  };
+
+  /**
+   * 通常フローでの商品追加保存。モーダルを閉じ、検索キーワードが追加した商品を隠さないよう
+   * クリアしたうえで、追加した商品カードまでスクロールし「✅ 登録しました」を一定時間だけ表示する。
+   * トップへは戻さず、追加したカードをそのまま確認できる位置へ移動する。
+   */
+  const handleAddSaved = (id: string) => {
+    setIsAdding(false);
+    setKeyword('');
+    setJustAddedProductId(id);
+  };
+
+  /**
    * 買い物リストの「商品比較リストに追加する」から開いた商品追加モーダルの戻り先。
    * 商品比較タブには残さず、買い物リストタブのトップ画面へ戻す。
    */
@@ -91,7 +137,7 @@ export function ProductComparisonScreen({
     }
     const kw = keyword.trim();
     if (!kw) return products;
-    return products.filter((p) => p.name.includes(kw));
+    return sortMatchesByRelevance(products, kw);
   }, [products, keyword, storeChangeRequest]);
 
   return (
@@ -127,6 +173,7 @@ export function ProductComparisonScreen({
             }
             onReturnToTop={resetProductComparisonView}
             onExitStoreChangeMode={exitStoreChangeMode}
+            justAdded={justAddedProductId === product.id}
           />
         ))}
       </div>
@@ -148,7 +195,8 @@ export function ProductComparisonScreen({
           title="商品を追加"
           initialName={prefillAddName ?? undefined}
           purchaseStoreOrigin={addOrigin === 'shopping-list'}
-          onClose={addOrigin === 'shopping-list' ? returnToShoppingListTop : resetProductComparisonView}
+          onClose={addOrigin === 'shopping-list' ? returnToShoppingListTop : handleAddCancel}
+          onSaved={addOrigin === 'shopping-list' ? undefined : handleAddSaved}
         />
       )}
     </section>

@@ -1,53 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { ManualListItem, Price, PriceHistoryEntry, Product, ShoppingListEntry, Store, Unit } from '../types';
+import type { ManualListItem, Price, PriceHistoryEntry, Product, ShoppingListEntry, Store } from '../types';
 import { loadState, saveState } from '../utils/storage';
 import { createId } from '../utils/id';
 import { findCheapestStoreId } from '../utils/calculations';
-
-interface ProductInput {
-  name: string;
-  quantity: number | null;
-  unit: Unit;
-  customUnit?: string;
-  comment: string;
-}
-
-interface AppData {
-  stores: Store[];
-  products: Product[];
-  prices: Price[];
-  manualItems: ManualListItem[];
-  shoppingListEntries: ShoppingListEntry[];
-
-  addStore: (name: string) => void;
-  renameStore: (id: string, name: string) => void;
-  removeStore: (id: string) => void;
-  moveStore: (id: string, direction: 'up' | 'down') => void;
-
-  addProduct: (input: ProductInput) => string;
-  updateProduct: (id: string, input: ProductInput) => void;
-  removeProduct: (id: string) => void;
-
-  getPrice: (productId: string, storeId: string) => number | undefined;
-  setPrice: (productId: string, storeId: string, price: number | null) => void;
-  getCheapestStoreId: (productId: string) => string | null;
-
-  /** 旧・買い物リスト手入力項目の削除のみ残す(新規追加は廃止、既存データの後方互換用)。 */
-  removeManualItem: (id: string) => void;
-
-  isInShoppingList: (productId: string, storeId: string) => boolean;
-  addToShoppingList: (productId: string, storeId: string) => void;
-  /** 商品比較リストに存在しない「今回だけの商品」を、名前だけで買い物リストへ追加する。 */
-  addCustomShoppingListEntry: (customName: string, storeId: string) => void;
-  removeShoppingListEntry: (id: string) => void;
-  /** 指定した店舗の買い物リスト(通常商品・今回だけの商品・旧手入力項目)だけをまとめて削除する。 */
-  resetShoppingListForStore: (storeId: string) => void;
-  /** 全店舗の買い物リストをまとめて削除する。Product/Store/Price/価格履歴/コメントは対象外。 */
-  resetAllShoppingLists: () => void;
-}
-
-const AppDataContext = createContext<AppData | null>(null);
+import { AppDataContext, type AppData, type ProductInput } from './appDataContextDefinition';
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [stores, setStores] = useState<Store[]>(() => loadState<Store[]>('stores', []));
@@ -137,11 +94,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const setPrice = (productId: string, storeId: string, price: number | null) => {
     const existing = prices.find((p) => p.productId === productId && p.storeId === storeId);
 
-    if (price === null || Number.isNaN(price)) {
+    if (price === null) {
       if (!existing) return;
       setPrices((prev) => prev.filter((p) => p.id !== existing.id));
       return;
     }
+
+    // 負の値・NaN・Infinityなど不正な価格は、呼び出し元(UI)を経由しなくても保存しない。
+    // 既存の価格もここでは変更しない(不正な呼び出しは無視するだけで、意図しない削除はしない)。
+    if (!Number.isFinite(price) || price < 0) return;
 
     if (existing && existing.price === price) return;
 
@@ -223,10 +184,4 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   );
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
-}
-
-export function useAppData(): AppData {
-  const ctx = useContext(AppDataContext);
-  if (!ctx) throw new Error('useAppData must be used within AppDataProvider');
-  return ctx;
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppData } from '../../context/AppDataContext';
+import { useAppData } from '../../context/useAppData';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { StoreFormModal } from './StoreFormModal';
 import { BackupRestoreSection } from './BackupRestoreSection';

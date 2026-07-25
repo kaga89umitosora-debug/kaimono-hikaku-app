@@ -16,9 +16,9 @@ export function getUnitPriceLabel(price: number, quantity: number | null): strin
   return `${(price / quantity).toFixed(2)} 円/単位`;
 }
 
-/** 同一商品の店舗別価格の中から最安の店舗IDを返す。価格未入力の店舗は対象外。 */
+/** 同一商品の店舗別価格の中から最安の店舗IDを返す。価格未入力の店舗は対象外(0円は有効な価格として扱う)。 */
 export function findCheapestStoreId(prices: Price[], quantity: number | null): string | null {
-  const priced = prices.filter((p) => p.price > 0);
+  const priced = prices.filter((p) => p.price >= 0);
   if (priced.length === 0) return null;
 
   let cheapest = priced[0];

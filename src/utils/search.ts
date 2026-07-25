@@ -15,8 +15,8 @@ export function matchesQuery(name: string, query: string): boolean {
   return normalizeForSearch(name).includes(normalizedQuery);
 }
 
-/** 商品名の部分一致候補を返す。完全一致を先頭に、最大limit件まで。 */
-export function searchProductCandidates(products: Product[], query: string, limit = 8): Product[] {
+/** 商品名がqueryにマッチするものを、完全一致を先頭にした順序ですべて返す(件数制限なし)。 */
+export function sortMatchesByRelevance(products: Product[], query: string): Product[] {
   const trimmed = query.trim();
   if (!trimmed) return [];
 
@@ -24,5 +24,10 @@ export function searchProductCandidates(products: Product[], query: string, limi
   const exact = matches.filter((p) => isExactMatch(p.name, trimmed));
   const partial = matches.filter((p) => !isExactMatch(p.name, trimmed));
 
-  return [...exact, ...partial].slice(0, limit);
+  return [...exact, ...partial];
+}
+
+/** 商品名の部分一致候補を返す。完全一致を先頭に、最大limit件まで(買い物リストの候補表示用)。 */
+export function searchProductCandidates(products: Product[], query: string, limit = 8): Product[] {
+  return sortMatchesByRelevance(products, query).slice(0, limit);
 }

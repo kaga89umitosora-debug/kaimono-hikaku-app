@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppData } from '../../context/AppDataContext';
+import { useAppData } from '../../context/useAppData';
 import { StoreGroupCard } from './StoreGroupCard';
 import { StoreFilterTabs } from './StoreFilterTabs';
 import { AddToShoppingListModal } from './AddToShoppingListModal';

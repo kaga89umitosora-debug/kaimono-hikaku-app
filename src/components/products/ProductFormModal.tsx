@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Modal } from '../common/Modal';
 import { UNIT_OPTIONS } from '../../types';
 import type { Unit } from '../../types';
-import { useAppData } from '../../context/AppDataContext';
+import { useAppData } from '../../context/useAppData';
 
 export interface ProductFormValue {
   name: string;
@@ -19,6 +19,7 @@ export function ProductFormModal({
   initialName,
   purchaseStoreOrigin = false,
   onClose,
+  onSaved,
 }: {
   title: string;
   /** 既存商品を編集する場合のみ渡す。未指定なら新規追加として扱う。 */
@@ -32,6 +33,8 @@ export function ProductFormModal({
    */
   purchaseStoreOrigin?: boolean;
   onClose: () => void;
+  /** 保存成功時に呼ぶコールバック。保存された商品IDを渡す。未指定ならonCloseを使う。 */
+  onSaved?: (id: string) => void;
 }) {
   const { stores, getPrice, setPrice, addProduct, updateProduct, addToShoppingList } = useAppData();
   const [name, setName] = useState(initialValue?.name ?? initialName ?? '');
@@ -70,6 +73,10 @@ export function ProductFormModal({
     const trimmedName = name.trim();
     if (!trimmedName) return;
     if (unit === 'その他' && !customUnit.trim()) return;
+    // 画面側のdisabled属性だけに頼らず、ここでも購入店舗の選択を確認する。
+    // 未選択のままEnter送信やsubmitイベントが直接発生しても、商品・価格・買い物リストへの
+    // 追加を一切行わずに処理を終了する。
+    if (purchaseStoreOrigin && !purchaseStoreId) return;
 
     const input = {
       name: trimmedName,
@@ -89,16 +96,18 @@ export function ProductFormModal({
       setPrice(id, store.id, raw === '' ? null : Number(raw));
     }
 
-    if (purchaseStoreOrigin) {
-      if (!purchaseStoreId) return;
+    if (purchaseStoreOrigin && purchaseStoreId) {
       addToShoppingList(id, purchaseStoreId);
       const storeName = stores.find((s) => s.id === purchaseStoreId)?.name ?? '';
       setSavedNotice({ productName: trimmedName, storeName });
       return;
     }
 
-    // スクロール処理はonClose側(resetProductComparisonView等)に一本化し、キャンセル時と同じ処理を通す。
-    onClose();
+    if (onSaved) {
+      onSaved(id);
+    } else {
+      onClose();
+    }
   };
 
   return (

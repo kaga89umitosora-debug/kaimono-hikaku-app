@@ -570,6 +570,38 @@ select {
   gap: 8px;
 }
 
+.product-card__saved-badge,
+.product-card__added-badge {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cheapest-border);
+  background: var(--cheapest-bg);
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.product-card__unsaved-badge {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.product-card__price-error {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.product-card__price-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 /* ---- 買い物リスト ---- */
 
 .store-group-list {

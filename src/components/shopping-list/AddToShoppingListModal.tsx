@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
-import { useAppData } from '../../context/AppDataContext';
+import { useAppData } from '../../context/useAppData';
 import { searchProductCandidates } from '../../utils/search';
 import type { Product, Store } from '../../types';
 
