@@ -21,6 +21,8 @@ export default defineConfig({
         background_color: '#eef6fc',
         lang: 'ja',
         display: 'standalone',
+        // TWA化時のアプリ識別を安定させるための明示的なid(GitHub Pagesの公開パス)
+        id: '/kaimono-hikaku-app/',
         // manifest内の相対パスは「manifestファイル自身の場所」を基準に解決されるため、
         // サブパス配下に置かれても正しく自分のスコープを指せる
         start_url: '.',
