@@ -19,3 +19,27 @@ export function scrollAppContentToTop(target?: Element | null): void {
     });
   });
 }
+
+/**
+ * 商品編集の保存後などに、対象要素(商品名見出しなど)がビューポート最上部に
+ * 来る位置までスクロールする。一覧の並び替えや先頭復帰とは無関係に、
+ * その要素だけをピンポイントで最上部へ合わせたい場合に使う。
+ * .app-shellはmin-height指定でコンテンツに応じて伸び、実際にスクロールしているのは
+ * window/documentElement側であるため(scrollAppContentToTop参照)、
+ * window.scrollYを基準に絶対位置を計算する。
+ * refをそのまま受け取り、rAF発火時点で.currentを読み直すことで、呼び出し後に
+ * 対象要素が(検索条件から外れる等で)アンマウントされていれば安全に何もしない。
+ */
+export function scrollElementToViewportTop(
+  ref: { current: Element | null },
+  topOffset = 0
+): void {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const target = ref.current;
+      if (!target) return;
+      const top = window.scrollY + target.getBoundingClientRect().top - topOffset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+  });
+}

@@ -144,8 +144,26 @@ export function ProductFormModal({
 
   return (
     <>
-      <Modal title={title} onClose={onClose}>
-        <form onSubmit={handleSubmit} className="form">
+      <Modal
+        title={title}
+        onClose={onClose}
+        headerActions={
+          <div className="modal__header-actions">
+            <button type="button" className="btn btn--ghost btn--compact" onClick={onClose}>
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              form="product-form"
+              className="btn btn--primary btn--compact"
+              disabled={!name.trim() || (purchaseStoreOrigin && !purchaseStoreId)}
+            >
+              保存
+            </button>
+          </div>
+        }
+      >
+        <form id="product-form" onSubmit={handleSubmit} className="form">
           <label className="form__field">
             <span>商品名</span>
             <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="例: いちご" />
@@ -209,7 +227,7 @@ export function ProductFormModal({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder={'例: 夕方に値引き\n冷凍食品コーナー\nいつも売り切れ'}
-              rows={3}
+              rows={2}
             />
           </label>
           {purchaseStoreOrigin && (
@@ -237,18 +255,6 @@ export function ProductFormModal({
               </ul>
             </div>
           )}
-          <div className="form__actions">
-            <button type="button" className="btn btn--ghost" onClick={onClose}>
-              キャンセル
-            </button>
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={!name.trim() || (purchaseStoreOrigin && !purchaseStoreId)}
-            >
-              保存
-            </button>
-          </div>
         </form>
       </Modal>
 

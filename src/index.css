@@ -23,8 +23,6 @@
   --shadow: rgba(31, 91, 158, 0.14) 0 8px 20px -8px;
   /* .bottom-nav のおおよその高さ。モーダル下部の安全余白の計算に使う */
   --bottom-nav-height: 64px;
-  /* .form__actions(モーダル内stickyフッター)のおおよその高さ。modal__bodyの下部余白計算に使う */
-  --modal-footer-height: 72px;
 
   --sans: system-ui, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
 
@@ -237,9 +235,17 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 16px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
+}
+
+.modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .modal__close {
@@ -265,10 +271,6 @@ select {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 16px;
-  /* .form__actionsをstickyフッターとして常時表示するため、フォーム側は下部にフッター高さ分の
-     余白を確保しておく。こうすることで、スクロールし切った際にフォーム末尾の入力欄(コメント欄・
-     購入店舗欄など)がフッターの下に隠れず、フッターの手前で止まって見える。 */
-  padding-bottom: calc(var(--modal-footer-height) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .form {
@@ -321,20 +323,17 @@ select {
 }
 
 .form__actions {
-  /* modal__body(overflow-y: auto)を基準にモーダル下部へ固定し、フォームをスクロール中でも
-     常にキャンセル/保存ボタンを押せるようにする。 */
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin: 8px -16px 0;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: var(--surface);
-  /* 背後の入力欄との境界を分かりやすくする */
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -6px 12px -8px rgba(31, 91, 158, 0.18);
+  margin-top: 8px;
+}
+
+/* モーダルヘッダー内(キャンセル/保存など)で使う、通常の.btnより一回り小さいボタン */
+.btn--compact {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
 }
 
 .form__price-list {
@@ -568,8 +567,19 @@ select {
   gap: 8px;
 }
 
+.product-card__header-main {
+  min-width: 0;
+}
+
+.product-card__header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .product-card__header h3 {
   font-size: 17px;
+  overflow-wrap: anywhere;
 }
 
 .product-card__meta {
@@ -817,6 +827,10 @@ select {
 }
 
 .add-list-candidate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   min-height: 44px;
   padding: 0 14px;
@@ -826,6 +840,20 @@ select {
   text-align: left;
   font: inherit;
   cursor: pointer;
+}
+
+.add-list-candidate__name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.add-list-candidate__price-status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.6;
 }
 
 .add-list-candidate--notfound {

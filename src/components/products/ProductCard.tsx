@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../../context/useAppData';
 import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
+import { scrollElementToViewportTop } from '../../utils/scroll';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Modal } from '../common/Modal';
 import { ProductFormModal } from './ProductFormModal';
@@ -52,6 +53,8 @@ export function ProductCard({
   const [pendingMoveStore, setPendingMoveStore] = useState<Store | null>(null);
   const [moveDuplicateStoreName, setMoveDuplicateStoreName] = useState<string | null>(null);
   const [movedNotice, setMovedNotice] = useState<{ productName: string; storeName: string } | null>(null);
+  // 編集保存後、商品名をビューポート最上部へ合わせるためのref。
+  const nameRef = useRef<HTMLHeadingElement>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
   const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
@@ -107,8 +110,8 @@ export function ProductCard({
       {justSaved && <p className="product-card__saved-badge">✅ 保存しました</p>}
       {(justAdded || justRegisteredPrice) && <p className="product-card__added-badge">✅ 登録しました</p>}
       <header className="product-card__header">
-        <div>
-          <h3>{product.name}</h3>
+        <div className="product-card__header-main">
+          <h3 ref={nameRef}>{product.name}</h3>
           <p className="product-card__meta">
             {product.quantity ? `${product.quantity}${unitLabel}` : unitLabel}
             <span className="product-card__updated"> ・更新日 {formatDate(product.updatedAt)}</span>
@@ -120,6 +123,26 @@ export function ProductCard({
             </p>
           )}
         </div>
+        <div className="product-card__header-actions">
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setEditing(true)}
+            aria-label={`${product.name}を編集`}
+          >
+            ✎
+          </button>
+          {!storeChangeRequest && (
+            <button
+              type="button"
+              className="icon-btn icon-btn--danger"
+              onClick={() => setConfirmingDelete(true)}
+              aria-label={`${product.name}を削除`}
+            >
+              🗑
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="product-card__prices">
@@ -127,7 +150,8 @@ export function ProductCard({
         {stores.map((store) => {
           const price = getPrice(product.id, store.id);
           const isCheapest = price !== undefined && cheapestStoreId === store.id;
-          const unitPriceLabel = price !== undefined ? getUnitPriceLabel(price, product.quantity) : null;
+          const unitPriceLabel =
+            price !== undefined ? getUnitPriceLabel(price, product.quantity, product.unit, product.customUnit) : null;
           return (
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
               <button type="button" className="price-cell__store" onClick={() => handleTapAdd(store)}>
@@ -142,20 +166,13 @@ export function ProductCard({
         })}
       </div>
 
-      <div className="product-card__actions">
-        <button type="button" className="btn btn--ghost" onClick={() => setEditing(true)}>
-          編集
-        </button>
-        {storeChangeRequest ? (
+      {storeChangeRequest && (
+        <div className="product-card__actions">
           <button type="button" className="btn btn--ghost" onClick={handleCancelStoreChange}>
             キャンセル
           </button>
-        ) : (
-          <button type="button" className="btn btn--danger-outline" onClick={() => setConfirmingDelete(true)}>
-            削除
-          </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {editing && (
         <ProductFormModal
@@ -172,6 +189,10 @@ export function ProductCard({
               setJustRegisteredPrice(false);
               setJustSaved(true);
             }
+            // 固定ヘッダーが存在しないレイアウトのためtopOffsetは0。
+            // 検索条件から外れてこのカードがアンマウントされた場合は
+            // rAF発火時にnameRef.currentがnullとなり、何も行わない。
+            scrollElementToViewportTop(nameRef);
           }}
         />
       )}

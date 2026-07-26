@@ -75,6 +75,7 @@ export function AddToShoppingListModal({
                   {candidates.map((product) => {
                     const unitLabel =
                       product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
+                    const hasNoPrice = stores.every((store) => getPrice(product.id, store.id) === undefined);
                     return (
                       <li key={product.id}>
                         <button
@@ -82,8 +83,13 @@ export function AddToShoppingListModal({
                           className="add-list-candidate"
                           onClick={() => setActiveProduct(product)}
                         >
-                          {product.name}
-                          {product.quantity ? ` ${product.quantity}${unitLabel}` : ''}
+                          <span className="add-list-candidate__name">
+                            {product.name}
+                            {product.quantity ? ` ${product.quantity}${unitLabel}` : ''}
+                          </span>
+                          {hasNoPrice && (
+                            <span className="add-list-candidate__price-status">価格未登録</span>
+                          )}
                         </button>
                       </li>
                     );
