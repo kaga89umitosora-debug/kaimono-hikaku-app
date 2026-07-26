@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/useAppData';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { getDisplayUnit } from '../../utils/calculations';
 import { scrollAppContentToTop } from '../../utils/scroll';
 import type { ManualListItem, Product, ShoppingListEntry, Store, StoreChangeRequest } from '../../types';
 
@@ -47,18 +48,19 @@ export function StoreGroupCard({
         {entries.map(({ entry, product }) => {
           const displayName = product ? product.name : entry.customName || '(名称未設定)';
           const price = product ? getPrice(product.id, store.id) : undefined;
-          const unitLabel = product
-            ? product.unit === 'その他'
-              ? product.customUnit || 'その他'
-              : product.unit
+          // 単位未設定・未知の単位・その他で独自単位が空欄の場合はnullになる。
+          // ProductCard・AddToShoppingListModalと同じ表示仕様(数量のみ表示/何も表示しない)に揃える。
+          const displayUnit = product ? getDisplayUnit(product.unit, product.customUnit) : null;
+          const quantityLabel = product
+            ? product.quantity
+              ? `${product.quantity}${displayUnit ?? ''}`
+              : displayUnit ?? ''
             : '';
           return (
             <li key={entry.id} className="store-group-card__item">
               <div className="store-group-card__item-main">
                 <span className="store-group-card__item-name">{displayName}</span>
-                <span className="store-group-card__item-meta">
-                  {product ? (product.quantity ? `${product.quantity}${unitLabel}` : unitLabel) : ''}
-                </span>
+                <span className="store-group-card__item-meta">{quantityLabel}</span>
                 <span className="store-group-card__item-amount">
                   {price !== undefined ? `${price.toLocaleString()}円` : product ? '価格未設定' : ''}
                 </span>

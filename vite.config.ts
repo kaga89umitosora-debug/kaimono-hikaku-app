@@ -16,8 +16,9 @@ export default defineConfig({
         name: '買い物比較リスト',
         short_name: '買い物比較',
         description: '同じ商品・類似商品をどの店で買うのが一番お得か比較するアプリ',
-        theme_color: '#7c3aed',
-        background_color: '#f7f6fa',
+        // index.css の --accent / --bg と一致させ、テーマカラー・スプラッシュ画面を実際のUI配色に揃える
+        theme_color: '#3d8bff',
+        background_color: '#eef6fc',
         lang: 'ja',
         display: 'standalone',
         // manifest内の相対パスは「manifestファイル自身の場所」を基準に解決されるため、
