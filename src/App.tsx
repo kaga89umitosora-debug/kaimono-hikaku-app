@@ -14,9 +14,6 @@ function App() {
   return (
     <AppDataProvider>
       <div className="app-shell">
-        <header className="app-header">
-          <h1>買い物比較リスト</h1>
-        </header>
         <main className="app-content">
           {screen === 'stores' && <StoreManagementScreen />}
           {screen === 'products' && (

@@ -159,6 +159,10 @@ export function ProductComparisonScreen({
         )}
       </div>
 
+      {!isStoreChangeMode && (
+        <p className="screen__description">商品内の店舗価格をタップすると買い物リストへ追加できます。</p>
+      )}
+
       {!isStoreChangeMode && <SearchBox value={keyword} onChange={setKeyword} />}
 
       {filtered.length === 0 && <p className="empty-hint">該当する商品がありません。</p>}
