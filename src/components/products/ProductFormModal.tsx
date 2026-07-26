@@ -194,6 +194,7 @@ export function ProductFormModal({
                 type="number"
                 inputMode="decimal"
                 min={0}
+                step="any"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="未入力の場合は価格そのもので比較"

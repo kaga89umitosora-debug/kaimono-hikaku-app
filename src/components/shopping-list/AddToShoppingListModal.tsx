@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useAppData } from '../../context/useAppData';
+import { getDisplayUnit } from '../../utils/calculations';
 import { searchProductCandidates } from '../../utils/search';
 import type { Product, Store } from '../../types';
 
@@ -73,8 +74,9 @@ export function AddToShoppingListModal({
                 <p className="add-list-candidates__hint">もしかしてこちらですか?</p>
                 <ul className="add-list-candidates__list">
                   {candidates.map((product) => {
-                    const unitLabel =
-                      product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
+                    // 単位未設定・未知の単位・その他で独自単位が空欄の場合はnullになる。
+                    // その場合は数量だけを表示し、「undefined」「その他」が表示されるのを防ぐ。
+                    const displayUnit = getDisplayUnit(product.unit, product.customUnit);
                     const hasNoPrice = stores.every((store) => getPrice(product.id, store.id) === undefined);
                     return (
                       <li key={product.id}>
@@ -85,7 +87,7 @@ export function AddToShoppingListModal({
                         >
                           <span className="add-list-candidate__name">
                             {product.name}
-                            {product.quantity ? ` ${product.quantity}${unitLabel}` : ''}
+                            {product.quantity ? ` ${product.quantity}${displayUnit ?? ''}` : ''}
                           </span>
                           {hasNoPrice && (
                             <span className="add-list-candidate__price-status">価格未登録</span>

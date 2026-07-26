@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../../context/useAppData';
-import { getUnitPriceLabel } from '../../utils/calculations';
+import { getDisplayUnit, getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
 import { scrollElementToViewportTop } from '../../utils/scroll';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -57,7 +57,13 @@ export function ProductCard({
   const nameRef = useRef<HTMLHeadingElement>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
-  const unitLabel = product.unit === 'その他' ? product.customUnit || 'その他' : product.unit;
+  // 単位未設定・未知の単位・その他で独自単位が空欄の場合はgetDisplayUnitがnullを返す。
+  // その場合、数量があれば数量だけを表示し、数量もなければ何も表示しない
+  // (「undefined」「null」「その他」が不自然に表示されるのを防ぐ)。
+  const displayUnit = getDisplayUnit(product.unit, product.customUnit);
+  const quantityLabel = product.quantity
+    ? `${product.quantity}${displayUnit ?? ''}`
+    : displayUnit ?? '';
   const originStoreName = storeChangeRequest
     ? stores.find((s) => s.id === storeChangeRequest.originStoreId)?.name ?? ''
     : '';
@@ -113,7 +119,7 @@ export function ProductCard({
         <div className="product-card__header-main">
           <h3 ref={nameRef}>{product.name}</h3>
           <p className="product-card__meta">
-            {product.quantity ? `${product.quantity}${unitLabel}` : unitLabel}
+            {quantityLabel}
             <span className="product-card__updated"> ・更新日 {formatDate(product.updatedAt)}</span>
           </p>
           {product.comment && <p className="product-card__comment">{product.comment}</p>}
