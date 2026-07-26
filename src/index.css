@@ -1,18 +1,30 @@
 :root {
-  --text: #3f3a45;
-  --text-h: #08060d;
-  --bg: #f7f6fa;
+  /* SORALAB NEXT ブランドカラー。値をここで変えるだけでアプリ全体の配色を更新できる。 */
+  --text: #33415c;
+  --text-h: #101d33;
+  --bg: #eef6fc;
+  /* 全面イラストは使わず、画面上部だけ空を感じる淡い青空〜白のグラデーション */
+  --bg-gradient: linear-gradient(180deg, #cfe8ff 0%, #eaf6ff 30%, #ffffff 58%);
   --surface: #ffffff;
-  --border: #e5e4e7;
-  --accent: #7c3aed;
+  /* カードにわずかな透明感を持たせるためのガラス調サーフェス。可読性優先で不透明度は高め。 */
+  --card-surface: rgba(255, 255, 255, 0.8);
+  --card-blur: 14px;
+  --border: #d7e6f5;
+  /* 少し明るく爽やかな青に調整(ボタン用にはさらに --accent-light とのグラデーションを使う) */
+  --accent: #3d8bff;
+  --accent-light: #74b3ff;
   --accent-contrast: #ffffff;
+  --accent-soft-bg: rgba(61, 139, 255, 0.12);
+  /* 削除・危険操作は引き続き赤、最安値ハイライトは引き続き緑(機能上の意味を持つ色のため維持) */
   --danger: #dc2626;
   --cheapest-bg: #dcfce7;
   --cheapest-border: #22c55e;
-  --accent-shadow: rgba(124, 58, 237, 0.35);
-  --shadow: rgba(0, 0, 0, 0.08) 0 4px 12px -2px;
+  --accent-shadow: rgba(61, 139, 255, 0.3);
+  --shadow: rgba(31, 91, 158, 0.14) 0 8px 20px -8px;
   /* .bottom-nav のおおよその高さ。モーダル下部の安全余白の計算に使う */
   --bottom-nav-height: 64px;
+  /* .form__actions(モーダル内stickyフッター)のおおよその高さ。modal__bodyの下部余白計算に使う */
+  --modal-footer-height: 72px;
 
   --sans: system-ui, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
 
@@ -25,18 +37,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #d6d3db;
-    --text-h: #f3f4f6;
-    --bg: #15131a;
-    --surface: #1f1d26;
-    --border: #33303c;
-    --accent: #a78bfa;
-    --accent-contrast: #15131a;
+    --text: #dbe6f5;
+    --text-h: #f1f6ff;
+    --bg: #0d1728;
+    --bg-gradient: linear-gradient(180deg, #163357 0%, #0f1e34 34%, #0d1728 60%);
+    --surface: #16233b;
+    --card-surface: rgba(22, 35, 59, 0.8);
+    --border: #28374f;
+    --accent: #6fa8ff;
+    --accent-light: #9cc6ff;
+    --accent-contrast: #0c1526;
+    --accent-soft-bg: rgba(111, 168, 255, 0.16);
     --danger: #f87171;
-    --cheapest-bg: #14532d;
+    --cheapest-bg: #123a24;
     --cheapest-border: #22c55e;
-    --accent-shadow: rgba(167, 139, 250, 0.35);
-    --shadow: rgba(0, 0, 0, 0.4) 0 4px 12px -2px;
+    --accent-shadow: rgba(111, 168, 255, 0.35);
+    --shadow: rgba(0, 0, 0, 0.45) 0 8px 20px -8px;
   }
 }
 
@@ -73,15 +89,7 @@ select {
   min-height: 100svh;
   max-width: 640px;
   margin: 0 auto;
-  background: var(--bg);
-}
-
-.app-header {
-  padding: 16px 16px 8px;
-}
-
-.app-header h1 {
-  font-size: 20px;
+  background: var(--bg-gradient);
 }
 
 .app-content {
@@ -97,7 +105,19 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 8px 0 16px;
+  margin: 14px 0 22px;
+}
+
+.screen__header h2 {
+  font-size: 22px;
+  letter-spacing: 0.01em;
+}
+
+.screen__description {
+  margin: -14px 0 16px;
+  font-size: 12px;
+  color: var(--text);
+  opacity: 0.65;
 }
 
 .empty-hint {
@@ -117,8 +137,9 @@ select {
 }
 
 .btn--primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 100%);
   color: var(--accent-contrast);
+  box-shadow: 0 6px 14px -6px var(--accent-shadow);
 }
 
 .btn--primary:disabled {
@@ -217,17 +238,23 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 
 .modal__close {
   border: none;
   background: transparent;
+  color: var(--text);
   font-size: 24px;
   line-height: 1;
   min-width: 44px;
   min-height: 44px;
   cursor: pointer;
+}
+
+.modal__close:hover {
+  color: var(--accent);
 }
 
 .modal__body {
@@ -238,9 +265,10 @@ select {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 16px;
-  /* 下部固定ナビ・ホームインジケーター・ソフトキーボード等に隠れないよう、
-     保存/キャンセルボタンの下に十分な余白を確保する */
-  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
+  /* .form__actionsをstickyフッターとして常時表示するため、フォーム側は下部にフッター高さ分の
+     余白を確保しておく。こうすることで、スクロールし切った際にフォーム末尾の入力欄(コメント欄・
+     購入店舗欄など)がフッターの下に隠れず、フッターの手前で止まって見える。 */
+  padding-bottom: calc(var(--modal-footer-height) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .form {
@@ -253,6 +281,16 @@ select {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.form__row {
+  display: flex;
+  gap: 12px;
+}
+
+.form__row .form__field {
+  flex: 1;
+  min-width: 0;
 }
 
 .form__field input,
@@ -274,11 +312,29 @@ select {
   resize: vertical;
 }
 
+.form__field input:focus-visible,
+.form__field select:focus-visible,
+.form__field textarea:focus-visible,
+.form__price-row input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .form__actions {
+  /* modal__body(overflow-y: auto)を基準にモーダル下部へ固定し、フォームをスクロール中でも
+     常にキャンセル/保存ボタンを押せるようにする。 */
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 8px;
+  margin: 8px -16px 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  /* 背後の入力欄との境界を分かりやすくする */
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -6px 12px -8px rgba(31, 91, 158, 0.18);
 }
 
 .form__price-list {
@@ -311,6 +367,13 @@ select {
   background: var(--surface);
 }
 
+.form__price-error {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
 .confirm-dialog__message {
   margin-bottom: 8px;
   white-space: pre-line;
@@ -341,12 +404,24 @@ select {
 }
 
 .bottom-nav__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
   font-size: 22px;
+  background: transparent;
+  transition: background-color 0.15s ease;
 }
 
 .bottom-nav__button.is-active {
   color: var(--accent);
   font-weight: 700;
+}
+
+.bottom-nav__button.is-active .bottom-nav__icon {
+  background: var(--accent-soft-bg);
 }
 
 /* ---- 店舗管理 ---- */
@@ -367,8 +442,11 @@ select {
   gap: 8px;
   padding: 12px;
   border-radius: 12px;
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 45%), var(--card-surface);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px solid var(--border);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .store-list__name {
@@ -422,6 +500,17 @@ select {
   border: 1px solid var(--border);
   background: var(--surface);
   margin-bottom: 16px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-shadow);
+}
+
+.search-box span {
+  font-size: 15px;
+  opacity: 0.55;
 }
 
 .search-box input {
@@ -448,10 +537,13 @@ select {
 }
 
 .product-card {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 45%), var(--card-surface);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -550,15 +642,6 @@ select {
   opacity: 0.6;
 }
 
-.price-cell input {
-  min-height: 40px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  width: 100%;
-}
-
 .price-cell__unit-price {
   font-size: 11px;
   opacity: 0.7;
@@ -581,27 +664,6 @@ select {
   padding: 4px 10px;
 }
 
-.product-card__unsaved-badge {
-  grid-column: 1 / -1;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.product-card__price-error {
-  grid-column: 1 / -1;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--danger);
-}
-
-.product-card__price-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 /* ---- 買い物リスト ---- */
 
 .store-group-list {
@@ -611,10 +673,13 @@ select {
 }
 
 .store-group-card {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 45%), var(--card-surface);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
   gap: 10px;

@@ -34,7 +34,6 @@ export function ProductCard({
   const {
     stores,
     getPrice,
-    setPrice,
     getCheapestStoreId,
     removeProduct,
     isInShoppingList,
@@ -44,10 +43,9 @@ export function ProductCard({
   const [editing, setEditing] = useState(false);
   // 商品編集の保存直後、カード上部に一定時間だけ表示する「保存しました」表示
   const [justSaved, setJustSaved] = useState(false);
-  // 価格入力欄で未保存の変更を店舗IDごとに保持する。キーが存在する店舗だけが「変更あり」。
-  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
-  // 価格保存時に不正な値(負の値・NaN・Infinityなど)が含まれていた場合のエラー表示
-  const [priceError, setPriceError] = useState(false);
+  // 価格未設定の店舗に新しく価格を登録した直後、「保存しました」の代わりに一定時間だけ表示する
+  // 「登録しました」表示。商品追加時(justAdded)と同じデザイン・挙動を流用する。
+  const [justRegisteredPrice, setJustRegisteredPrice] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [pendingAddStore, setPendingAddStore] = useState<Store | null>(null);
   const [duplicateStoreName, setDuplicateStoreName] = useState<string | null>(null);
@@ -95,50 +93,11 @@ export function ProductCard({
     return () => clearTimeout(timer);
   }, [justSaved]);
 
-  const dirtyStoreIds = Object.keys(priceDrafts);
-  const hasPriceDraft = dirtyStoreIds.length > 0;
-  // 変更対象の中に既存価格の変更が1件でもあれば「変更を保存」、すべて新規入力なら「価格を登録」と表示する
-  const hasExistingPriceChange = dirtyStoreIds.some((id) => getPrice(product.id, id) !== undefined);
-  const savePriceLabel = hasExistingPriceChange ? '変更を保存' : '価格を登録';
-
-  const handlePriceInputChange = (storeId: string, raw: string) => {
-    setPriceError(false);
-    const original = getPrice(product.id, storeId);
-    const originalStr = original !== undefined ? String(original) : '';
-    setPriceDrafts((prev) => {
-      if (raw === originalStr) {
-        if (!(storeId in prev)) return prev;
-        const next = { ...prev };
-        delete next[storeId];
-        return next;
-      }
-      return { ...prev, [storeId]: raw };
-    });
-  };
-
-  const handleSavePrices = () => {
-    const parsedEntries = Object.entries(priceDrafts).map(([storeId, raw]) => {
-      const trimmed = raw.trim();
-      return { storeId, price: trimmed === '' ? null : Number(trimmed) };
-    });
-    const hasInvalidPrice = parsedEntries.some(
-      ({ price }) => price !== null && (!Number.isFinite(price) || price < 0)
-    );
-    if (hasInvalidPrice) {
-      setPriceError(true);
-      return;
-    }
-    setPriceError(false);
-    for (const { storeId, price } of parsedEntries) {
-      setPrice(product.id, storeId, price);
-    }
-    setPriceDrafts({});
-  };
-
-  const handleCancelPrices = () => {
-    setPriceDrafts({});
-    setPriceError(false);
-  };
+  useEffect(() => {
+    if (!justRegisteredPrice) return;
+    const timer = setTimeout(() => setJustRegisteredPrice(false), 2500);
+    return () => clearTimeout(timer);
+  }, [justRegisteredPrice]);
 
   return (
     <article
@@ -146,7 +105,7 @@ export function ProductCard({
       data-product-id={product.id}
     >
       {justSaved && <p className="product-card__saved-badge">✅ 保存しました</p>}
-      {justAdded && <p className="product-card__added-badge">✅ 登録しました</p>}
+      {(justAdded || justRegisteredPrice) && <p className="product-card__added-badge">✅ 登録しました</p>}
       <header className="product-card__header">
         <div>
           <h3>{product.name}</h3>
@@ -165,12 +124,10 @@ export function ProductCard({
 
       <div className="product-card__prices">
         {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
-        {hasPriceDraft && <p className="product-card__unsaved-badge">未保存の価格変更があります</p>}
         {stores.map((store) => {
           const price = getPrice(product.id, store.id);
           const isCheapest = price !== undefined && cheapestStoreId === store.id;
           const unitPriceLabel = price !== undefined ? getUnitPriceLabel(price, product.quantity) : null;
-          const draft = priceDrafts[store.id];
           return (
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
               <button type="button" className="price-cell__store" onClick={() => handleTapAdd(store)}>
@@ -179,31 +136,10 @@ export function ProductCard({
                   {price !== undefined ? `${price}円` : '価格未設定'}
                 </span>
               </button>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={draft ?? (price ?? '')}
-                placeholder="未入力"
-                onChange={(e) => handlePriceInputChange(store.id, e.target.value)}
-              />
               {unitPriceLabel && <span className="price-cell__unit-price">{unitPriceLabel}</span>}
             </div>
           );
         })}
-        {priceError && (
-          <p className="product-card__price-error">価格は0以上の数字で入力してください</p>
-        )}
-        {hasPriceDraft && (
-          <div className="product-card__price-actions">
-            <button type="button" className="btn btn--ghost" onClick={handleCancelPrices}>
-              キャンセル
-            </button>
-            <button type="button" className="btn btn--primary" onClick={handleSavePrices}>
-              {savePriceLabel}
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="product-card__actions">
@@ -227,9 +163,15 @@ export function ProductCard({
           productId={product.id}
           initialValue={product}
           onClose={() => setEditing(false)}
-          onSaved={() => {
+          onSaved={(_id, options) => {
             setEditing(false);
-            setJustSaved(true);
+            if (options?.registeredNewPrice) {
+              setJustSaved(false);
+              setJustRegisteredPrice(true);
+            } else {
+              setJustRegisteredPrice(false);
+              setJustSaved(true);
+            }
           }}
         />
       )}
