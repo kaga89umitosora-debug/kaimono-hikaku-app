@@ -488,6 +488,29 @@ select {
   margin-top: 8px;
 }
 
+.about-section {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+}
+
+.about-section h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.about-section__link {
+  color: var(--accent);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.about-section__link:hover,
+.about-section__link:focus-visible {
+  text-decoration: underline;
+}
+
 /* ---- 商品比較 ---- */
 
 .search-box {

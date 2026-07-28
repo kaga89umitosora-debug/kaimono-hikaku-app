@@ -67,6 +67,18 @@ export function StoreManagementScreen() {
 
       <BackupRestoreSection />
 
+      <section className="about-section">
+        <h3>このアプリについて</h3>
+        <a
+          className="about-section__link"
+          href="https://kaga89umitosora-debug.github.io/kaimono-hikaku-app/privacy.html"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          プライバシーポリシー
+        </a>
+      </section>
+
       {isAdding && (
         <StoreFormModal
           title="店舗を追加"
