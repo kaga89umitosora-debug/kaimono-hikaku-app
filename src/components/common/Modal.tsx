@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useI18n } from '../../i18n';
 
 export function Modal({
   title,
@@ -16,6 +17,7 @@ export function Modal({
    */
   headerActions?: ReactNode;
 }) {
+  const { t } = useI18n();
   const bodyRef = useRef<HTMLDivElement>(null);
 
   // モーダルを開くたびに、実際のスクロールコンテナ(.modal__body)を必ず先頭へ戻す。
@@ -36,7 +38,7 @@ export function Modal({
         <div className="modal__header">
           <h2>{title}</h2>
           {headerActions ?? (
-            <button type="button" className="modal__close" onClick={onClose} aria-label="閉じる">
+            <button type="button" className="modal__close" onClick={onClose} aria-label={t('common.close')}>
               ×
             </button>
           )}

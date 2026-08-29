@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/useAppData';
+import { useI18n } from '../../i18n';
+import type { Language } from '../../i18n';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { StoreFormModal } from './StoreFormModal';
 import { BackupRestoreSection } from './BackupRestoreSection';
 
-export function StoreManagementScreen() {
+export function StoreManagementScreen({
+  onReplayOnboarding,
+}: {
+  /** 「使い方をもう一度見る」押下時に呼ばれる。App 側でオンボーディングを再表示する。 */
+  onReplayOnboarding?: () => void;
+}) {
   const { stores, addStore, renameStore, removeStore, moveStore } = useAppData();
+  const { t, language, setLanguage } = useI18n();
   const [isAdding, setIsAdding] = useState(false);
   const [editingStore, setEditingStore] = useState<{ id: string; name: string } | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -13,13 +21,13 @@ export function StoreManagementScreen() {
   return (
     <section className="screen">
       <div className="screen__header">
-        <h2>店舗管理</h2>
+        <h2>{t('screen.stores.title')}</h2>
         <button type="button" className="btn btn--primary" onClick={() => setIsAdding(true)}>
-          + 店舗を追加
+          {t('screen.stores.addStore')}
         </button>
       </div>
 
-      {stores.length === 0 && <p className="empty-hint">店舗がまだ登録されていません。</p>}
+      {stores.length === 0 && <p className="empty-hint">{t('store.emptyList')}</p>}
 
       <ul className="store-list">
         {stores.map((store, index) => (
@@ -31,7 +39,7 @@ export function StoreManagementScreen() {
                 className="icon-btn"
                 disabled={index === 0}
                 onClick={() => moveStore(store.id, 'up')}
-                aria-label="表示順を上へ"
+                aria-label={t('store.moveUp')}
               >
                 ↑
               </button>
@@ -40,7 +48,7 @@ export function StoreManagementScreen() {
                 className="icon-btn"
                 disabled={index === stores.length - 1}
                 onClick={() => moveStore(store.id, 'down')}
-                aria-label="表示順を下へ"
+                aria-label={t('store.moveDown')}
               >
                 ↓
               </button>
@@ -48,7 +56,7 @@ export function StoreManagementScreen() {
                 type="button"
                 className="icon-btn"
                 onClick={() => setEditingStore({ id: store.id, name: store.name })}
-                aria-label="店舗名を編集"
+                aria-label={t('store.editTitle')}
               >
                 ✎
               </button>
@@ -56,7 +64,7 @@ export function StoreManagementScreen() {
                 type="button"
                 className="icon-btn icon-btn--danger"
                 onClick={() => setPendingDeleteId(store.id)}
-                aria-label="店舗を削除"
+                aria-label={t('store.deleteAria')}
               >
                 🗑
               </button>
@@ -68,20 +76,41 @@ export function StoreManagementScreen() {
       <BackupRestoreSection />
 
       <section className="about-section">
-        <h3>このアプリについて</h3>
+        <h3>{t('settings.display')}</h3>
+        <label className="form__field">
+          <span>{t('settings.language')}</span>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as Language)}
+          >
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+      </section>
+
+      <section className="about-section">
+        <h3>{t('about.title')}</h3>
         <a
           className="about-section__link"
-          href="https://kaga89umitosora-debug.github.io/kaimono-hikaku-app/privacy.html"
+          href="https://soralabnext.github.io/kaimono-hikaku-app/privacy.html"
           target="_blank"
           rel="noopener noreferrer"
         >
-          プライバシーポリシー
+          {t('about.privacyPolicy')}
         </a>
+        <button
+          type="button"
+          className="about-section__link"
+          onClick={() => onReplayOnboarding?.()}
+        >
+          {t('onboarding.replay')}
+        </button>
       </section>
 
       {isAdding && (
         <StoreFormModal
-          title="店舗を追加"
+          title={t('store.addTitle')}
           initialName=""
           onSubmit={(name) => {
             addStore(name);
@@ -93,7 +122,7 @@ export function StoreManagementScreen() {
 
       {editingStore && (
         <StoreFormModal
-          title="店舗名を編集"
+          title={t('store.editTitle')}
           initialName={editingStore.name}
           onSubmit={(name) => {
             renameStore(editingStore.id, name);
@@ -105,8 +134,9 @@ export function StoreManagementScreen() {
 
       {pendingDeleteId && (
         <ConfirmDialog
-          title="店舗を削除しますか?"
-          message="この店舗に登録された価格データもすべて削除されます。"
+          title={t('store.deleteConfirmTitle')}
+          message={t('store.deleteConfirmMessage')}
+          confirmLabel={t('common.confirmDelete')}
           onConfirm={() => {
             removeStore(pendingDeleteId);
             setPendingDeleteId(null);

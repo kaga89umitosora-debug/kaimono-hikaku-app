@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>プライバシーポリシー | 買い物比較リスト</title>
+    <title>Privacy Policy | Store Price Compare / 店舗価格比較</title>
     <style>
       :root {
         --accent: #3d8bff;
@@ -36,14 +36,47 @@
       header h1 {
         color: var(--text-h);
         font-size: 24px;
-        margin: 0 0 8px;
+        margin: 0 0 16px;
       }
 
-      header p.updated {
+      .lang-nav {
+        font-size: 14px;
+        margin: 0 0 28px;
+      }
+
+      .lang-nav a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      .lang-nav a:hover,
+      .lang-nav a:focus-visible {
+        text-decoration: underline;
+      }
+
+      .lang-nav span {
+        margin: 0 8px;
+        opacity: 0.5;
+      }
+
+      .policy__lang-title {
+        color: var(--text-h);
+        font-size: 20px;
+        margin: 0 0 8px;
+        padding-top: 8px;
+      }
+
+      .meta {
         font-size: 13px;
         color: var(--text);
         opacity: 0.7;
-        margin: 0 0 32px;
+        margin: 0 0 24px;
+      }
+
+      .lang-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 40px 0;
       }
 
       section {
@@ -54,7 +87,7 @@
         margin-bottom: 16px;
       }
 
-      section h2 {
+      section h3 {
         color: var(--text-h);
         font-size: 17px;
         margin: 0 0 12px;
@@ -112,86 +145,196 @@
   <body>
     <div class="page">
       <header>
-        <h1>プライバシーポリシー</h1>
-        <p class="updated">
-          運営者: SoraLab Next<br />
-          制定日: 2026年7月28日
-        </p>
+        <h1>Privacy Policy / プライバシーポリシー</h1>
       </header>
 
-      <section>
-        <p>
-          「<span class="app-name">買い物比較リスト</span>」(以下「本アプリ」といいます)は、同じ商品・類似商品をどの店舗で購入するのが最もお得かを比較し、店舗ごとの買い物リストを作成するためのアプリケーションです。本ページは、本アプリにおける利用者情報の取り扱いについて説明するものです。
-        </p>
-      </section>
+      <nav class="lang-nav">
+        <a href="#en">English</a>
+        <span aria-hidden="true">|</span>
+        <a href="#ja">日本語</a>
+      </nav>
 
-      <section>
-        <h2>個人情報の収集について</h2>
-        <p>
-          本アプリは、氏名・メールアドレス・電話番号などの個人を特定できる情報を一切収集しません。アカウント登録やログイン機能もありません。
+      <article id="en" lang="en" class="policy">
+        <h2 class="policy__lang-title">English</h2>
+        <p class="meta">
+          Operator: SoraLab Next<br />
+          Established: July 28, 2026<br />
+          Last updated: August 29, 2026
         </p>
-      </section>
 
-      <section>
-        <h2>アプリ内で保存されるデータについて</h2>
-        <p>
-          本アプリでは、以下のデータをブラウザの <code>localStorage</code>(端末内のローカルストレージ)にのみ保存します。
-        </p>
-        <ul>
-          <li>登録した店舗情報</li>
-          <li>登録した商品情報・価格情報</li>
-          <li>買い物リストの内容</li>
-          <li>その他アプリの動作に必要な設定情報</li>
-        </ul>
-        <p>
-          これらのデータは<strong>ご利用の端末内にのみ保存され、外部のサーバーへ送信されることは一切ありません。</strong>本アプリはバックエンドサーバーを持たず、外部の分析ツールや広告配信サービスとの通信も行いません。
-        </p>
-        <p>
-          データはブラウザのキャッシュ・サイトデータを削除した場合や、アプリをアンインストールした場合に端末から削除されます。本アプリ内のバックアップ機能を使うことで、データをご自身の端末上にJSONファイルとして書き出し・保管することも可能です。
-        </p>
-      </section>
+        <section>
+          <p>
+            <span class="app-name">Store Price Compare</span> ("the App") lets you save the prices of
+            products you find at the stores you regularly shop at, compare those prices across stores,
+            and build a shopping list for each store. All prices are entered by you; the App does not
+            fetch or look up prices from the internet. This page explains how the App handles user
+            information.
+          </p>
+        </section>
 
-      <section>
-        <h2>第三者への提供について</h2>
-        <p>
-          本アプリは、収集した情報が存在しないため、第三者への情報提供は行いません。広告配信・アクセス解析・トラッキングに関する第三者SDKも組み込んでいません。
-        </p>
-      </section>
+        <section>
+          <h3>Collection of personal information</h3>
+          <p>
+            The App does not collect any information that can identify you personally, such as your
+            name, email address, or phone number. There is no account registration or sign-in.
+          </p>
+        </section>
 
-      <section>
-        <h2>お子様のプライバシーについて</h2>
-        <p>
-          本アプリは個人情報を一切収集しないため、年齢を問わずすべての利用者について同様に、個人情報の収集・送信は行われません。
-        </p>
-      </section>
+        <section>
+          <h3>Data stored within the App</h3>
+          <p>
+            The App stores the following data only in your browser's <code>localStorage</code> (local
+            storage on your device):
+          </p>
+          <ul>
+            <li>Store information</li>
+            <li>Product information</li>
+            <li>Price information</li>
+            <li>Price change history</li>
+            <li>Shopping lists</li>
+            <li>Display settings such as language</li>
+            <li>Other settings required for the App to function</li>
+          </ul>
+          <p>
+            <strong>
+              This data is stored only on your device and is never sent to any external server.
+            </strong>
+            The App has no backend server and does not communicate with any external analytics or
+            advertising service.
+          </p>
+          <p>
+            The data is removed from your device when you clear your browser's cache / site data or
+            uninstall the App. Using the App's backup feature, you can export your saved data (store
+            information, product information, price information, price change history, and shopping
+            lists) to a JSON file and keep it on your own device. Display settings such as language
+            are not included in the backup file.
+          </p>
+        </section>
 
-      <section>
-        <h2>権限について</h2>
-        <p>
-          本アプリは、連絡先・位置情報・カメラ・マイクなど、端末内のセンシティブな情報へアクセスする権限を要求しません。
-        </p>
-      </section>
+        <section>
+          <h3>Provision to third parties</h3>
+          <p>
+            Because the App collects no information, it does not provide any information to third
+            parties. It does not include any third-party SDK for advertising, analytics, or tracking.
+          </p>
+        </section>
 
-      <section>
-        <h2>本ポリシーの変更について</h2>
-        <p>
-          本ポリシーの内容は、法令の改正や本アプリの機能追加等に応じて、予告なく変更される場合があります。変更後の内容は本ページに掲載した時点から効力を生じるものとします。
-        </p>
-      </section>
+        <section>
+          <h3>Children's privacy</h3>
+          <p>
+            Because the App does not collect any personal information at all, the same applies to
+            every user regardless of age: no personal information is collected or transmitted.
+          </p>
+        </section>
 
-      <section>
-        <h2>お問い合わせ</h2>
-        <p>本ポリシーに関するお問い合わせは、下記までご連絡ください。</p>
-        <!--
-          連絡先を変更する場合は、下のメールアドレス部分だけを書き換えてください。
-          例: <p>メールアドレス: new-address@example.com</p>
-        -->
-        <p>運営者: SoraLab Next</p>
-        <p>メールアドレス: soralabnext@gmail.com</p>
-      </section>
+        <section>
+          <h3>Permissions</h3>
+          <p>
+            The App does not request permission to access sensitive information on your device, such
+            as your contacts, location, camera, or microphone.
+          </p>
+        </section>
+
+        <section>
+          <h3>Changes to this policy</h3>
+          <p>
+            This policy may be changed without prior notice in response to changes in laws or to
+            additions to the App's features. Any changed content takes effect when it is posted on
+            this page.
+          </p>
+        </section>
+
+        <section>
+          <h3>Contact</h3>
+          <p>For inquiries about this policy, please contact us at:</p>
+          <p>Operator: SoraLab Next</p>
+          <p>Email: soralabnext@gmail.com</p>
+        </section>
+      </article>
+
+      <hr class="lang-divider" />
+
+      <article id="ja" lang="ja" class="policy">
+        <h2 class="policy__lang-title">日本語</h2>
+        <p class="meta">
+          運営者: SoraLab Next<br />
+          制定日：2026年7月28日<br />
+          最終更新日：2026年8月29日
+        </p>
+
+        <section>
+          <p>
+            「<span class="app-name">店舗価格比較</span>」(以下「本アプリ」といいます)は、利用者がよく利用する店舗で見つけた商品の価格を保存し、店舗間で価格を比較し、店舗ごとの買い物リストを作成するためのアプリケーションです。価格はすべて利用者ご自身が入力するものであり、本アプリがインターネット上の価格を自動で取得・照会することはありません。本ページは、本アプリにおける利用者情報の取り扱いについて説明するものです。
+          </p>
+        </section>
+
+        <section>
+          <h3>個人情報の収集について</h3>
+          <p>
+            本アプリは、氏名・メールアドレス・電話番号などの個人を特定できる情報を一切収集しません。アカウント登録やログイン機能もありません。
+          </p>
+        </section>
+
+        <section>
+          <h3>アプリ内で保存されるデータについて</h3>
+          <p>
+            本アプリでは、以下のデータをブラウザの <code>localStorage</code>(端末内のローカルストレージ)にのみ保存します。
+          </p>
+          <ul>
+            <li>店舗情報</li>
+            <li>商品情報</li>
+            <li>価格情報</li>
+            <li>価格の変更履歴</li>
+            <li>買い物リスト</li>
+            <li>言語などの表示設定</li>
+            <li>その他アプリの動作に必要な設定情報</li>
+          </ul>
+          <p>
+            これらのデータは<strong>ご利用の端末内にのみ保存され、外部のサーバーへ送信されることは一切ありません。</strong>本アプリはバックエンドサーバーを持たず、外部の分析ツールや広告配信サービスとの通信も行いません。
+          </p>
+          <p>
+            データはブラウザのキャッシュ・サイトデータを削除した場合や、アプリをアンインストールした場合に端末から削除されます。本アプリのバックアップ機能を使うことで、保存されたデータ(店舗情報・商品情報・価格情報・価格の変更履歴・買い物リスト)をJSONファイルとして端末上に書き出し・保管できます。言語などの表示設定はバックアップファイルには含まれません。
+          </p>
+        </section>
+
+        <section>
+          <h3>第三者への提供について</h3>
+          <p>
+            本アプリは、収集した情報が存在しないため、第三者への情報提供は行いません。広告配信・アクセス解析・トラッキングに関する第三者SDKも組み込んでいません。
+          </p>
+        </section>
+
+        <section>
+          <h3>お子様のプライバシーについて</h3>
+          <p>
+            本アプリは個人情報を一切収集しないため、年齢を問わずすべての利用者について同様に、個人情報の収集・送信は行われません。
+          </p>
+        </section>
+
+        <section>
+          <h3>権限について</h3>
+          <p>
+            本アプリは、連絡先・位置情報・カメラ・マイクなど、端末内のセンシティブな情報へアクセスする権限を要求しません。
+          </p>
+        </section>
+
+        <section>
+          <h3>本ポリシーの変更について</h3>
+          <p>
+            本ポリシーの内容は、法令の改正や本アプリの機能追加等に応じて、予告なく変更される場合があります。変更後の内容は本ページに掲載した時点から効力を生じるものとします。
+          </p>
+        </section>
+
+        <section>
+          <h3>お問い合わせ</h3>
+          <p>本ポリシーに関するお問い合わせは、下記までご連絡ください。</p>
+          <p>運営者: SoraLab Next</p>
+          <p>メールアドレス: soralabnext@gmail.com</p>
+        </section>
+      </article>
 
       <footer>
-        <p>買い物比較リスト プライバシーポリシー</p>
+        <p>Store Price Compare / 店舗価格比較 — Privacy Policy / プライバシーポリシー</p>
       </footer>
     </div>
   </body>

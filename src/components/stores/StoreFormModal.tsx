@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Modal } from '../common/Modal';
+import { useI18n } from '../../i18n';
 
 export function StoreFormModal({
   title,
@@ -12,6 +13,7 @@ export function StoreFormModal({
   onSubmit: (name: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState(initialName);
 
   const handleSubmit = (e: FormEvent) => {
@@ -25,15 +27,20 @@ export function StoreFormModal({
     <Modal title={title} onClose={onClose}>
       <form onSubmit={handleSubmit} className="form">
         <label className="form__field">
-          <span>店舗名</span>
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="例: Aスーパー" />
+          <span>{t('store.nameLabel')}</span>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t('store.namePlaceholder')}
+          />
         </label>
         <div className="form__actions">
           <button type="button" className="btn btn--ghost" onClick={onClose}>
-            キャンセル
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn btn--primary" disabled={!name.trim()}>
-            保存
+            {t('common.save')}
           </button>
         </div>
       </form>

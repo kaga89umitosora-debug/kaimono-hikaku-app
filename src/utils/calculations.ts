@@ -29,24 +29,27 @@ export function getDisplayUnit(unit: Unit | undefined, customUnit: string | unde
 }
 
 /**
- * 単価表示(例: "20円/個", "2.5円/g", "0.99円/g")。
+ * 単価表示(例: "20/個", "2.5/g", "0.99/g")。
+ * このアプリは通貨管理を持たないため、数値と単位だけを返す(通貨記号・「円」は付けない)。
+ * 「単価」であることは呼び出し側のラベル(common.unitPrice)と "/単位" の書式で示す。
+ *
  * 計算式(price / quantity)・丸め精度(小数点以下2桁、toFixed(2)相当)は変更しない。
  * toFixed(2)で丸めた文字列をNumber()へ戻すことで、末尾の不要な0(および整数時の小数点)だけを
  * 表示上取り除く。丸め自体はtoFixed(2)がそのまま担うため、精度は従来と同一。
- * 内容量が未入力・0以下、または実際の単位が決定できない(未設定・その他で独自単位が空欄など)
- * 場合は、不自然な表示を避けるためnullを返す(呼び出し側は非表示にする)。
+ * 内容量が未入力・0以下、または単位ラベルが無い場合は、不自然な表示を避けるためnullを返す。
+ *
+ * unitLabel は表示用に解決済みの単位文字列(呼び出し側が i18n/units.ts の resolveUnitLabel 等で
+ * 言語対応済み。customUnit の場合はユーザー入力そのまま)。この関数は保存値には一切触れない。
  */
 export function getUnitPriceLabel(
   price: number,
   quantity: number | null,
-  unit: Unit | undefined,
-  customUnit: string | undefined
+  unitLabel: string | null
 ): string | null {
   if (!quantity || quantity <= 0) return null;
-  const displayUnit = getDisplayUnit(unit, customUnit);
-  if (!displayUnit) return null;
+  if (!unitLabel) return null;
   const rounded = Number((price / quantity).toFixed(2)).toString();
-  return `${rounded}円/${displayUnit}`;
+  return `${rounded}/${unitLabel}`;
 }
 
 /** 同一商品の店舗別価格の中から最安の店舗IDを返す。価格未入力の店舗は対象外(0円は有効な価格として扱う)。 */

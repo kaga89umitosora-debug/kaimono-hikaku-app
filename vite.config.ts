@@ -13,13 +13,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png'],
       manifest: {
-        name: '買い物比較リスト',
-        short_name: '買い物比較',
-        description: '同じ商品・類似商品をどの店で買うのが一番お得か比較するアプリ',
+        name: '店舗価格比較 - Store Price Compare',
+        short_name: '店舗価格比較',
+        description:
+          'Save product prices at your favorite stores, compare them, and build shopping lists.',
         // index.css の --accent / --bg と一致させ、テーマカラー・スプラッシュ画面を実際のUI配色に揃える
         theme_color: '#3d8bff',
         background_color: '#eef6fc',
-        lang: 'ja',
+        lang: 'en',
         display: 'standalone',
         // TWA化時のアプリ識別を安定させるための明示的なid(GitHub Pagesの公開パス)
         id: '/kaimono-hikaku-app/',

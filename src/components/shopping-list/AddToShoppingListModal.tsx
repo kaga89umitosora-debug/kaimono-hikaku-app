@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useAppData } from '../../context/useAppData';
-import { getDisplayUnit } from '../../utils/calculations';
+import { useI18n, joinQuantityUnit, resolveUnitLabel, formatPriceNumber } from '../../i18n';
 import { searchProductCandidates } from '../../utils/search';
 import type { Product, Store } from '../../types';
 
@@ -18,6 +18,7 @@ export function AddToShoppingListModal({
 }) {
   const { products, stores, getPrice, isInShoppingList, addToShoppingList, addCustomShoppingListEntry } =
     useAppData();
+  const { t, language } = useI18n();
 
   const [query, setQuery] = useState('');
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
@@ -56,27 +57,28 @@ export function AddToShoppingListModal({
 
   return (
     <>
-      <Modal title="買い物リストへ商品を追加" onClose={onClose}>
+      <Modal title={t('shoppingList.addModalTitle')} onClose={onClose}>
         {!activeProduct && !showNotFoundChoices && (
           <div className="form">
             <label className="form__field">
-              <span>商品名</span>
+              <span>{t('product.nameLabel')}</span>
               <input
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="例: 牛乳"
+                placeholder={t('shoppingList.searchPlaceholder')}
               />
             </label>
 
             {trimmedQuery && (
               <div className="add-list-candidates">
-                <p className="add-list-candidates__hint">もしかしてこちらですか?</p>
+                <p className="add-list-candidates__hint">{t('shoppingList.suggestHint')}</p>
                 <ul className="add-list-candidates__list">
                   {candidates.map((product) => {
-                    // 単位未設定・未知の単位・その他で独自単位が空欄の場合はnullになる。
-                    // その場合は数量だけを表示し、「undefined」「その他」が表示されるのを防ぐ。
-                    const displayUnit = getDisplayUnit(product.unit, product.customUnit);
+                    // 単位未設定・未知の単位・その他で独自単位が空欄の場合は null になる。
+                    // その場合は数量だけを表示する。既知の単位は現在言語のラベル、
+                    // 'その他' の customUnit はユーザー入力のまま。
+                    const unitLabel = resolveUnitLabel(product.unit, product.customUnit, t);
                     const hasNoPrice = stores.every((store) => getPrice(product.id, store.id) === undefined);
                     return (
                       <li key={product.id}>
@@ -87,10 +89,14 @@ export function AddToShoppingListModal({
                         >
                           <span className="add-list-candidate__name">
                             {product.name}
-                            {product.quantity ? ` ${product.quantity}${displayUnit ?? ''}` : ''}
+                            {product.quantity
+                              ? ` ${joinQuantityUnit(product.quantity, unitLabel, language)}`
+                              : ''}
                           </span>
                           {hasNoPrice && (
-                            <span className="add-list-candidate__price-status">価格未登録</span>
+                            <span className="add-list-candidate__price-status">
+                              {t('shoppingList.noPriceYet')}
+                            </span>
                           )}
                         </button>
                       </li>
@@ -102,7 +108,7 @@ export function AddToShoppingListModal({
                       className="add-list-candidate add-list-candidate--notfound"
                       onClick={() => setShowNotFoundChoices(true)}
                     >
-                      この中にない
+                      {t('shoppingList.noneOfThese')}
                     </button>
                   </li>
                 </ul>
@@ -114,7 +120,7 @@ export function AddToShoppingListModal({
         {activeProduct && (
           <div className="form">
             <button type="button" className="btn btn--ghost" onClick={() => setActiveProduct(null)}>
-              ← 戻る
+              ← {t('common.back')}
             </button>
             <h3 className="add-list-product-title">{activeProduct.name}</h3>
             <ul className="add-list-store-options">
@@ -129,34 +135,36 @@ export function AddToShoppingListModal({
                       onClick={() => handleTapStoreForProduct(activeProduct, store)}
                     >
                       <span>{store.name}</span>
-                      <span className="add-list-store-option__price">{price}円</span>
+                      <span className="add-list-store-option__price">
+                        {formatPriceNumber(price, language)}
+                      </span>
                     </button>
                   </li>
                 );
               })}
             </ul>
             {stores.every((store) => getPrice(activeProduct.id, store.id) === undefined) && (
-              <p className="empty-hint">価格が登録されている店舗がありません。</p>
+              <p className="empty-hint">{t('shoppingList.noStoreWithPrice')}</p>
             )}
           </div>
         )}
 
         {showNotFoundChoices && (
           <div className="form">
-            <p>この商品をどのように登録しますか?</p>
+            <p>{t('shoppingList.notFoundPrompt')}</p>
             <div className="add-list-choice-buttons">
               <button
                 type="button"
                 className="btn btn--primary"
                 onClick={() => onNavigateToAddProduct(trimmedQuery)}
               >
-                商品比較リストに追加する
+                {t('shoppingList.addToComparison')}
               </button>
               <button type="button" className="btn btn--ghost" onClick={handleChooseToday}>
-                今回だけ買い物リストに追加する
+                {t('shoppingList.addTodayOnly')}
               </button>
               <button type="button" className="btn btn--ghost" onClick={() => setShowNotFoundChoices(false)}>
-                キャンセル
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -164,7 +172,7 @@ export function AddToShoppingListModal({
       </Modal>
 
       {todayStorePicker && (
-        <Modal title="追加先の店舗を選択" onClose={() => setTodayStorePicker(false)}>
+        <Modal title={t('shoppingList.pickStoreTitle')} onClose={() => setTodayStorePicker(false)}>
           <ul className="add-list-store-options">
             {stores.map((store) => (
               <li key={store.id}>
@@ -186,9 +194,12 @@ export function AddToShoppingListModal({
 
       {confirmAdd && (
         <ConfirmDialog
-          title="買い物リストへ追加しますか?"
-          message={`「${confirmAdd.product.name}」を${confirmAdd.store.name}の買い物リストへ追加しますか?`}
-          confirmLabel="追加する"
+          title={t('product.addToListConfirmTitle')}
+          message={t('product.addToListConfirmMessage', {
+            name: confirmAdd.product.name,
+            store: confirmAdd.store.name,
+          })}
+          confirmLabel={t('common.addAction')}
           onConfirm={() => {
             addToShoppingList(confirmAdd.product.id, confirmAdd.store.id);
             setAddedStoreName(confirmAdd.store.name);
@@ -200,9 +211,12 @@ export function AddToShoppingListModal({
 
       {confirmToday && (
         <ConfirmDialog
-          title="今回だけ追加しますか?"
-          message={`「${confirmToday.name}」を今回だけ、\n${confirmToday.store.name}の買い物リストへ追加しますか?`}
-          confirmLabel="追加する"
+          title={t('shoppingList.addTodayConfirmTitle')}
+          message={t('shoppingList.addTodayConfirmMessage', {
+            name: confirmToday.name,
+            store: confirmToday.store.name,
+          })}
+          confirmLabel={t('common.addAction')}
           onConfirm={() => {
             addCustomShoppingListEntry(confirmToday.name, confirmToday.store.id);
             setAddedStoreName(confirmToday.store.name);
@@ -213,22 +227,24 @@ export function AddToShoppingListModal({
       )}
 
       {duplicateStoreName && (
-        <Modal title="買い物リスト" onClose={() => setDuplicateStoreName(null)}>
-          <p className="confirm-dialog__message">すでに登録されています。</p>
+        <Modal title={t('nav.shoppingList')} onClose={() => setDuplicateStoreName(null)}>
+          <p className="confirm-dialog__message">{t('product.alreadyInList')}</p>
           <div className="form__actions">
             <button type="button" className="btn btn--primary" onClick={() => setDuplicateStoreName(null)}>
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </Modal>
       )}
 
       {addedStoreName && (
-        <Modal title="買い物リスト" onClose={closeEverything}>
-          <p className="confirm-dialog__message">{addedStoreName}の買い物リストへ追加しました。</p>
+        <Modal title={t('nav.shoppingList')} onClose={closeEverything}>
+          <p className="confirm-dialog__message">
+            {t('shoppingList.addedToStoreNotice', { store: addedStoreName })}
+          </p>
           <div className="form__actions">
             <button type="button" className="btn btn--primary" onClick={closeEverything}>
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </Modal>

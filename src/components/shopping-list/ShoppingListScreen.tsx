@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/useAppData';
+import { useI18n } from '../../i18n';
 import { StoreGroupCard } from './StoreGroupCard';
 import { StoreFilterTabs } from './StoreFilterTabs';
 import { AddToShoppingListModal } from './AddToShoppingListModal';
@@ -31,6 +32,7 @@ export function ShoppingListScreen({
   onNavigateToAddProduct: (name: string) => void;
 }) {
   const { stores, products, manualItems, shoppingListEntries, resetAllShoppingLists } = useAppData();
+  const { t } = useI18n();
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [confirmingResetAll, setConfirmingResetAll] = useState(false);
@@ -65,9 +67,9 @@ export function ShoppingListScreen({
   return (
     <section className="screen">
       <div className="screen__header">
-        <h2>買い物リスト</h2>
+        <h2>{t('screen.shoppingList.title')}</h2>
         <button type="button" className="btn btn--primary" onClick={() => setIsAddingItem(true)}>
-          + 商品を追加
+          {t('screen.shoppingList.addItem')}
         </button>
       </div>
 
@@ -87,7 +89,7 @@ export function ShoppingListScreen({
             className="store-group-card__reset-btn"
             onClick={() => setConfirmingResetAll(true)}
           >
-            すべてリセット
+            {t('shoppingList.resetAll')}
           </button>
         </div>
       )}
@@ -95,8 +97,8 @@ export function ShoppingListScreen({
       {!hasItemsForSelection && (
         <p className="empty-hint">
           {selectedStoreId === null
-            ? '買い物リストに商品がありません。「+ 商品を追加」または商品比較画面で店舗の価格をタップして追加してください。'
-            : 'この店舗の買い物リストには商品がありません。'}
+            ? t('shoppingList.emptyAll')
+            : t('shoppingList.emptyStore')}
         </p>
       )}
 
@@ -125,9 +127,9 @@ export function ShoppingListScreen({
 
       {confirmingResetAll && (
         <ConfirmDialog
-          title="買い物リストをすべてリセットしますか?"
-          message="すべての店舗の買い物リストをすべて削除しますか?"
-          confirmLabel="すべて削除する"
+          title={t('shoppingList.resetAllConfirmTitle')}
+          message={t('shoppingList.resetAllConfirmMessage')}
+          confirmLabel={t('shoppingList.deleteAllAction')}
           onConfirm={() => {
             resetAllShoppingLists();
             setConfirmingResetAll(false);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppData } from '../../context/useAppData';
+import { useI18n, joinQuantityUnit, resolveUnitLabel, formatPriceNumber } from '../../i18n';
 import { ConfirmDialog } from '../common/ConfirmDialog';
-import { getDisplayUnit } from '../../utils/calculations';
 import { scrollAppContentToTop } from '../../utils/scroll';
 import type { ManualListItem, Product, ShoppingListEntry, Store, StoreChangeRequest } from '../../types';
 
@@ -19,6 +19,7 @@ export function StoreGroupCard({
   onRequestStoreChange: (request: StoreChangeRequest) => void;
 }) {
   const { getPrice, removeShoppingListEntry, removeManualItem, resetShoppingListForStore } = useAppData();
+  const { t, language } = useI18n();
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
@@ -33,36 +34,39 @@ export function StoreGroupCard({
       <div className="store-group-card__header">
         <h3>{store.name}</h3>
         <div className="store-group-card__header-meta">
-          <span className="store-group-card__total">合計 {total.toLocaleString()}円</span>
+          <span className="store-group-card__total">
+            {t('shoppingList.total')} {formatPriceNumber(total, language)}
+          </span>
           <button
             type="button"
             className="store-group-card__reset-btn"
             onClick={() => setConfirmingReset(true)}
           >
-            リセット
+            {t('shoppingList.reset')}
           </button>
         </div>
       </div>
 
       <ul className="store-group-card__list">
         {entries.map(({ entry, product }) => {
-          const displayName = product ? product.name : entry.customName || '(名称未設定)';
+          const displayName = product ? product.name : entry.customName || t('shoppingList.unnamed');
           const price = product ? getPrice(product.id, store.id) : undefined;
-          // 単位未設定・未知の単位・その他で独自単位が空欄の場合はnullになる。
-          // ProductCard・AddToShoppingListModalと同じ表示仕様(数量のみ表示/何も表示しない)に揃える。
-          const displayUnit = product ? getDisplayUnit(product.unit, product.customUnit) : null;
-          const quantityLabel = product
-            ? product.quantity
-              ? `${product.quantity}${displayUnit ?? ''}`
-              : displayUnit ?? ''
-            : '';
+          // 単位未設定・未知の単位・その他で独自単位が空欄の場合は null になる。
+          // ProductCard・AddToShoppingListModal と同じ表示仕様(数量のみ表示/何も表示しない)に揃える。
+          // 既知の単位は現在言語のラベル、'その他' の customUnit はユーザー入力のまま。
+          const unitLabel = product ? resolveUnitLabel(product.unit, product.customUnit, t) : null;
+          const quantityLabel = product ? joinQuantityUnit(product.quantity, unitLabel, language) : '';
           return (
             <li key={entry.id} className="store-group-card__item">
               <div className="store-group-card__item-main">
                 <span className="store-group-card__item-name">{displayName}</span>
                 <span className="store-group-card__item-meta">{quantityLabel}</span>
                 <span className="store-group-card__item-amount">
-                  {price !== undefined ? `${price.toLocaleString()}円` : product ? '価格未設定' : ''}
+                  {price !== undefined
+                    ? formatPriceNumber(price, language)
+                    : product
+                      ? t('product.priceUnset')
+                      : ''}
                 </span>
               </div>
               <div className="store-group-card__item-actions">
@@ -78,7 +82,7 @@ export function StoreGroupCard({
                       })
                     }
                   >
-                    他店購入
+                    {t('shoppingList.buyElsewhere')}
                   </button>
                 )}
                 <button
@@ -86,7 +90,7 @@ export function StoreGroupCard({
                   className="btn btn--danger-outline"
                   onClick={() => setPendingDelete({ kind: 'entry', id: entry.id, name: displayName })}
                 >
-                  削除
+                  {t('common.delete')}
                 </button>
               </div>
             </li>
@@ -97,7 +101,7 @@ export function StoreGroupCard({
             <div className="store-group-card__item-main">
               <span className="store-group-card__item-name">{item.name}</span>
               <span className="store-group-card__item-meta">{item.quantity}</span>
-              <span className="store-group-card__item-amount">{item.amount.toLocaleString()}円</span>
+              <span className="store-group-card__item-amount">{formatPriceNumber(item.amount, language)}</span>
             </div>
             <div className="store-group-card__item-actions">
               <button
@@ -105,7 +109,7 @@ export function StoreGroupCard({
                 className="btn btn--danger-outline"
                 onClick={() => setPendingDelete({ kind: 'manual', id: item.id, name: item.name })}
               >
-                削除
+                {t('common.delete')}
               </button>
             </div>
           </li>
@@ -114,9 +118,9 @@ export function StoreGroupCard({
 
       {pendingDelete && (
         <ConfirmDialog
-          title="買い物リストから削除しますか?"
-          message={`「${pendingDelete.name}」を買い物リストから削除しますか?`}
-          confirmLabel="削除する"
+          title={t('shoppingList.deleteItemConfirmTitle')}
+          message={t('shoppingList.deleteItemConfirmMessage', { name: pendingDelete.name })}
+          confirmLabel={t('common.confirmDelete')}
           onConfirm={() => {
             if (pendingDelete.kind === 'entry') {
               removeShoppingListEntry(pendingDelete.id);
@@ -131,9 +135,9 @@ export function StoreGroupCard({
 
       {confirmingReset && (
         <ConfirmDialog
-          title="買い物リストをリセットしますか?"
-          message={`${store.name}の買い物リストをすべて削除しますか?`}
-          confirmLabel="すべて削除する"
+          title={t('shoppingList.resetStoreConfirmTitle')}
+          message={t('shoppingList.resetStoreConfirmMessage', { store: store.name })}
+          confirmLabel={t('shoppingList.deleteAllAction')}
           onConfirm={() => {
             resetShoppingListForStore(store.id);
             setConfirmingReset(false);

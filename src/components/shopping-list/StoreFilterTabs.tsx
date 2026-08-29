@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n';
 import type { Store } from '../../types';
 
 export function StoreFilterTabs({
@@ -11,6 +12,7 @@ export function StoreFilterTabs({
   selectedStoreId: string | null;
   onSelect: (storeId: string | null) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="store-filter-tabs">
       <button
@@ -18,7 +20,7 @@ export function StoreFilterTabs({
         className={`store-filter-tab ${selectedStoreId === null ? 'is-active' : ''}`}
         onClick={() => onSelect(null)}
       >
-        すべて
+        {t('shoppingList.filterAll')}
       </button>
       {stores.map((store) => (
         <button

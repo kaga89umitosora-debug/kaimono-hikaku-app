@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppData } from '../../context/useAppData';
+import { useI18n } from '../../i18n';
 import { SearchBox } from './SearchBox';
 import { ProductFormModal } from './ProductFormModal';
 import { ProductCard } from './ProductCard';
@@ -24,6 +25,7 @@ export function ProductComparisonScreen({
   onReturnToShoppingList?: () => void;
 }) {
   const { products } = useAppData();
+  const { t } = useI18n();
   // 商品比較画面の最上部の基準位置。resetProductComparisonViewでの復帰先に使う。
   const topRef = useRef<HTMLDivElement>(null);
   const [keyword, setKeyword] = useState('');
@@ -144,7 +146,7 @@ export function ProductComparisonScreen({
     <section className="screen">
       <div ref={topRef} />
       <div className="screen__header">
-        <h2>商品比較</h2>
+        <h2>{t('screen.products.title')}</h2>
         {!isStoreChangeMode && (
           <button
             type="button"
@@ -154,18 +156,18 @@ export function ProductComparisonScreen({
               setIsAdding(true);
             }}
           >
-            + 商品を追加
+            {t('screen.products.addProduct')}
           </button>
         )}
       </div>
 
       {!isStoreChangeMode && (
-        <p className="screen__description">商品内の店舗価格をタップすると買い物リストへ追加できます。</p>
+        <p className="screen__description">{t('product.tapHint')}</p>
       )}
 
       {!isStoreChangeMode && <SearchBox value={keyword} onChange={setKeyword} />}
 
-      {filtered.length === 0 && <p className="empty-hint">該当する商品がありません。</p>}
+      {filtered.length === 0 && <p className="empty-hint">{t('product.noMatch')}</p>}
 
       <div className="product-list">
         {filtered.map((product) => (
@@ -189,14 +191,14 @@ export function ProductComparisonScreen({
             className="btn btn--ghost btn--block"
             onClick={resetProductComparisonView}
           >
-            トップ画面に戻る
+            {t('product.backToTop')}
           </button>
         </div>
       )}
 
       {isAdding && (
         <ProductFormModal
-          title="商品を追加"
+          title={t('product.addTitle')}
           initialName={prefillAddName ?? undefined}
           purchaseStoreOrigin={addOrigin === 'shopping-list'}
           onClose={addOrigin === 'shopping-list' ? returnToShoppingListTop : handleAddCancel}

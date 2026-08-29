@@ -501,9 +501,20 @@ select {
 }
 
 .about-section__link {
+  display: block;
   color: var(--accent);
   font-size: 14px;
   text-decoration: none;
+  /* <button> でも <a> と同じ見た目にするためのリセット */
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.about-section__link + .about-section__link {
+  margin-top: 8px;
 }
 
 .about-section__link:hover,
@@ -932,4 +943,57 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* ---- オンボーディング(初回操作説明) ---- */
+/* 配色は既存のCSS変数のみを使用し、ライト/ダークの既存仕様をそのまま引き継ぐ。
+   ボタンは既存の .btn / .btn--primary / .btn--ghost / .btn--block を再利用する。 */
+
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.onboarding__body {
+  margin: 4px 0;
+  /* steps.ts の本文に含まれる改行をそのまま表示する */
+  white-space: pre-line;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.onboarding__progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.onboarding__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: width 0.15s ease, background-color 0.15s ease;
+}
+
+.onboarding__dot.is-active {
+  width: 22px;
+  background: var(--accent);
+}
+
+.onboarding__nav {
+  display: flex;
+  gap: 10px;
+}
+
+.onboarding__nav-btn {
+  flex: 1;
+  min-height: 48px;
+}
+
+.onboarding__skip {
+  margin-top: -6px;
+  opacity: 0.8;
 }

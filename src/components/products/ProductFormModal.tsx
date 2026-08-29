@@ -3,6 +3,7 @@ import { Modal } from '../common/Modal';
 import { UNIT_OPTIONS } from '../../types';
 import type { Unit } from '../../types';
 import { useAppData } from '../../context/useAppData';
+import { useI18n, unitOptionLabel } from '../../i18n';
 
 export interface ProductFormValue {
   name: string;
@@ -41,6 +42,7 @@ export function ProductFormModal({
   onSaved?: (id: string, options?: { registeredNewPrice: boolean }) => void;
 }) {
   const { stores, getPrice, setPrice, addProduct, updateProduct, addToShoppingList } = useAppData();
+  const { t } = useI18n();
   const [name, setName] = useState(initialValue?.name ?? initialName ?? '');
   const [quantity, setQuantity] = useState(
     initialValue?.quantity != null ? String(initialValue.quantity) : ''
@@ -150,7 +152,7 @@ export function ProductFormModal({
         headerActions={
           <div className="modal__header-actions">
             <button type="button" className="btn btn--ghost btn--compact" onClick={onClose}>
-              キャンセル
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -158,19 +160,24 @@ export function ProductFormModal({
               className="btn btn--primary btn--compact"
               disabled={!name.trim() || (purchaseStoreOrigin && !purchaseStoreId)}
             >
-              保存
+              {t('common.save')}
             </button>
           </div>
         }
       >
         <form id="product-form" onSubmit={handleSubmit} className="form">
           <label className="form__field">
-            <span>商品名</span>
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="例: いちご" />
+            <span>{t('product.nameLabel')}</span>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('product.namePlaceholder')}
+            />
           </label>
           <div className="form__field">
-            <span>各店舗の価格</span>
-            {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
+            <span>{t('product.pricesLabel')}</span>
+            {stores.length === 0 && <p className="empty-hint">{t('product.registerStoreFirst')}</p>}
             <div className="form__price-list">
               {stores.map((store) => (
                 <label key={store.id} className="form__price-row">
@@ -178,18 +185,19 @@ export function ProductFormModal({
                   <input
                     type="number"
                     inputMode="decimal"
+                    step="any"
                     value={prices[store.id] ?? ''}
-                    placeholder="未入力"
+                    placeholder={t('product.priceInputPlaceholder')}
                     onChange={(e) => handlePriceChange(store.id, e.target.value)}
                   />
                 </label>
               ))}
             </div>
-            {priceError && <p className="form__price-error">価格は0以上の数字で入力してください</p>}
+            {priceError && <p className="form__price-error">{t('product.priceError')}</p>}
           </div>
           <div className="form__row">
             <label className="form__field">
-              <span>内容量</span>
+              <span>{t('product.quantityLabel')}</span>
               <input
                 type="number"
                 inputMode="decimal"
@@ -197,15 +205,15 @@ export function ProductFormModal({
                 step="any"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                placeholder="未入力の場合は価格そのもので比較"
+                placeholder={t('product.quantityPlaceholder')}
               />
             </label>
             <label className="form__field">
-              <span>単位</span>
+              <span>{t('product.unitLabel')}</span>
               <select value={unit} onChange={(e) => setUnit(e.target.value as Unit)}>
                 {UNIT_OPTIONS.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {unitOptionLabel(option, t)}
                   </option>
                 ))}
               </select>
@@ -213,28 +221,28 @@ export function ProductFormModal({
           </div>
           {unit === 'その他' && (
             <label className="form__field">
-              <span>単位(自由入力)</span>
+              <span>{t('product.customUnitLabel')}</span>
               <input
                 ref={customUnitInputRef}
                 value={customUnit}
                 onChange={(e) => setCustomUnit(e.target.value)}
-                placeholder="例: 本・枚・袋・箱など"
+                placeholder={t('product.customUnitPlaceholder')}
               />
             </label>
           )}
           <label className="form__field">
-            <span>コメント(任意)</span>
+            <span>{t('product.commentLabel')}</span>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder={'例: 夕方に値引き\n冷凍食品コーナー\nいつも売り切れ'}
+              placeholder={t('product.commentPlaceholder')}
               rows={2}
             />
           </label>
           {purchaseStoreOrigin && (
             <div className="form__field">
-              <span>購入店舗</span>
-              {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
+              <span>{t('product.purchaseStoreLabel')}</span>
+              {stores.length === 0 && <p className="empty-hint">{t('product.registerStoreFirst')}</p>}
               <ul className="add-list-store-options">
                 {stores.map((store) => {
                   const raw = prices[store.id] ?? '';
@@ -247,7 +255,7 @@ export function ProductFormModal({
                       >
                         <span>{store.name}</span>
                         <span className="add-list-store-option__price">
-                          {raw === '' ? '価格未設定' : `${raw}円`}
+                          {raw === '' ? t('product.priceUnset') : raw}
                         </span>
                       </button>
                     </li>
@@ -260,13 +268,16 @@ export function ProductFormModal({
       </Modal>
 
       {savedNotice && (
-        <Modal title="買い物リスト" onClose={onClose}>
+        <Modal title={t('nav.shoppingList')} onClose={onClose}>
           <p className="confirm-dialog__message">
-            {savedNotice.productName}を{savedNotice.storeName}の買い物リストへ追加しました。
+            {t('product.addedToListNotice', {
+              name: savedNotice.productName,
+              store: savedNotice.storeName,
+            })}
           </p>
           <div className="form__actions">
             <button type="button" className="btn btn--primary" onClick={onClose}>
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </Modal>

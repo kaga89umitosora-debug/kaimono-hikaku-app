@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppData } from '../../context/useAppData';
-import { getDisplayUnit, getUnitPriceLabel } from '../../utils/calculations';
+import { useI18n, joinQuantityUnit, resolveUnitLabel, formatPriceNumber } from '../../i18n';
+import { getUnitPriceLabel } from '../../utils/calculations';
 import { formatDate } from '../../utils/date';
 import { scrollElementToViewportTop } from '../../utils/scroll';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -41,6 +42,7 @@ export function ProductCard({
     addToShoppingList,
     removeShoppingListEntry,
   } = useAppData();
+  const { t, language } = useI18n();
   const [editing, setEditing] = useState(false);
   // 商品編集の保存直後、カード上部に一定時間だけ表示する「保存しました」表示
   const [justSaved, setJustSaved] = useState(false);
@@ -57,13 +59,11 @@ export function ProductCard({
   const nameRef = useRef<HTMLHeadingElement>(null);
 
   const cheapestStoreId = getCheapestStoreId(product.id);
-  // 単位未設定・未知の単位・その他で独自単位が空欄の場合はgetDisplayUnitがnullを返す。
-  // その場合、数量があれば数量だけを表示し、数量もなければ何も表示しない
-  // (「undefined」「null」「その他」が不自然に表示されるのを防ぐ)。
-  const displayUnit = getDisplayUnit(product.unit, product.customUnit);
-  const quantityLabel = product.quantity
-    ? `${product.quantity}${displayUnit ?? ''}`
-    : displayUnit ?? '';
+  // 単位未設定・未知の単位・その他で独自単位が空欄の場合は null になる。
+  // その場合、数量があれば数量だけを表示し、数量もなければ何も表示しない。
+  // 既知の単位は現在言語のラベルへ、'その他' の customUnit はユーザー入力のまま。
+  const unitLabel = resolveUnitLabel(product.unit, product.customUnit, t);
+  const quantityLabel = joinQuantityUnit(product.quantity, unitLabel, language);
   const originStoreName = storeChangeRequest
     ? stores.find((s) => s.id === storeChangeRequest.originStoreId)?.name ?? ''
     : '';
@@ -113,19 +113,24 @@ export function ProductCard({
       className={`product-card ${storeChangeRequest ? 'product-card--highlighted' : ''}`}
       data-product-id={product.id}
     >
-      {justSaved && <p className="product-card__saved-badge">✅ 保存しました</p>}
-      {(justAdded || justRegisteredPrice) && <p className="product-card__added-badge">✅ 登録しました</p>}
+      {justSaved && <p className="product-card__saved-badge">{t('product.savedBadge')}</p>}
+      {(justAdded || justRegisteredPrice) && (
+        <p className="product-card__added-badge">{t('product.addedBadge')}</p>
+      )}
       <header className="product-card__header">
         <div className="product-card__header-main">
           <h3 ref={nameRef}>{product.name}</h3>
           <p className="product-card__meta">
             {quantityLabel}
-            <span className="product-card__updated"> ・更新日 {formatDate(product.updatedAt)}</span>
+            <span className="product-card__updated">
+              {' '}
+              {t('product.updatedOn')} {formatDate(product.updatedAt)}
+            </span>
           </p>
           {product.comment && <p className="product-card__comment">{product.comment}</p>}
           {storeChangeRequest && (
             <p className="product-card__move-hint">
-              {originStoreName}から購入する店舗を変更する場合は、他の店舗をタップしてください。
+              {t('product.moveHint', { store: originStoreName })}
             </p>
           )}
         </div>
@@ -134,7 +139,7 @@ export function ProductCard({
             type="button"
             className="icon-btn"
             onClick={() => setEditing(true)}
-            aria-label={`${product.name}を編集`}
+            aria-label={t('product.editAria', { name: product.name })}
           >
             ✎
           </button>
@@ -143,7 +148,7 @@ export function ProductCard({
               type="button"
               className="icon-btn icon-btn--danger"
               onClick={() => setConfirmingDelete(true)}
-              aria-label={`${product.name}を削除`}
+              aria-label={t('product.deleteAria', { name: product.name })}
             >
               🗑
             </button>
@@ -152,21 +157,25 @@ export function ProductCard({
       </header>
 
       <div className="product-card__prices">
-        {stores.length === 0 && <p className="empty-hint">先に店舗を登録してください。</p>}
+        {stores.length === 0 && <p className="empty-hint">{t('product.registerStoreFirst')}</p>}
         {stores.map((store) => {
           const price = getPrice(product.id, store.id);
           const isCheapest = price !== undefined && cheapestStoreId === store.id;
           const unitPriceLabel =
-            price !== undefined ? getUnitPriceLabel(price, product.quantity, product.unit, product.customUnit) : null;
+            price !== undefined ? getUnitPriceLabel(price, product.quantity, unitLabel) : null;
           return (
             <div key={store.id} className={`price-cell ${isCheapest ? 'price-cell--cheapest' : ''}`}>
               <button type="button" className="price-cell__store" onClick={() => handleTapAdd(store)}>
                 {store.name}
                 <span className={`price-cell__amount ${price === undefined ? 'price-cell__amount--unset' : ''}`}>
-                  {price !== undefined ? `${price}円` : '価格未設定'}
+                  {price !== undefined ? formatPriceNumber(price, language) : t('product.priceUnset')}
                 </span>
               </button>
-              {unitPriceLabel && <span className="price-cell__unit-price">{unitPriceLabel}</span>}
+              {unitPriceLabel && (
+                <span className="price-cell__unit-price">
+                  {t('common.unitPrice')} {unitPriceLabel}
+                </span>
+              )}
             </div>
           );
         })}
@@ -175,14 +184,14 @@ export function ProductCard({
       {storeChangeRequest && (
         <div className="product-card__actions">
           <button type="button" className="btn btn--ghost" onClick={handleCancelStoreChange}>
-            キャンセル
+            {t('common.cancel')}
           </button>
         </div>
       )}
 
       {editing && (
         <ProductFormModal
-          title="商品を編集"
+          title={t('product.editTitle')}
           productId={product.id}
           initialValue={product}
           onClose={() => setEditing(false)}
@@ -205,8 +214,9 @@ export function ProductCard({
 
       {confirmingDelete && (
         <ConfirmDialog
-          title="商品を削除しますか?"
-          message={`「${product.name}」の価格データもすべて削除されます。`}
+          title={t('product.deleteConfirmTitle')}
+          message={t('dialog.deleteProduct', { name: product.name })}
+          confirmLabel={t('common.confirmDelete')}
           onConfirm={() => {
             removeProduct(product.id);
             setConfirmingDelete(false);
@@ -217,9 +227,12 @@ export function ProductCard({
 
       {pendingAddStore && (
         <ConfirmDialog
-          title="買い物リストへ追加しますか?"
-          message={`「${product.name}」を${pendingAddStore.name}の買い物リストへ追加しますか?`}
-          confirmLabel="追加する"
+          title={t('product.addToListConfirmTitle')}
+          message={t('product.addToListConfirmMessage', {
+            name: product.name,
+            store: pendingAddStore.name,
+          })}
+          confirmLabel={t('common.addAction')}
           onConfirm={() => {
             addToShoppingList(product.id, pendingAddStore.id);
             setPendingAddStore(null);
@@ -233,11 +246,11 @@ export function ProductCard({
       )}
 
       {duplicateStoreName && (
-        <Modal title="買い物リスト" onClose={() => setDuplicateStoreName(null)}>
-          <p className="confirm-dialog__message">すでに登録されています。</p>
+        <Modal title={t('nav.shoppingList')} onClose={() => setDuplicateStoreName(null)}>
+          <p className="confirm-dialog__message">{t('product.alreadyInList')}</p>
           <div className="form__actions">
             <button type="button" className="btn btn--primary" onClick={() => setDuplicateStoreName(null)}>
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </Modal>
@@ -245,9 +258,13 @@ export function ProductCard({
 
       {pendingMoveStore && storeChangeRequest && (
         <ConfirmDialog
-          title="購入店舗を変更しますか?"
-          message={`「${product.name}」の購入店舗を\n${originStoreName}から${pendingMoveStore.name}へ変更しますか?`}
-          confirmLabel="変更する"
+          title={t('product.changeStoreConfirmTitle')}
+          message={t('product.changeStoreConfirmMessage', {
+            name: product.name,
+            from: originStoreName,
+            to: pendingMoveStore.name,
+          })}
+          confirmLabel={t('common.changeAction')}
           onConfirm={() => {
             removeShoppingListEntry(storeChangeRequest.entryId);
             addToShoppingList(product.id, pendingMoveStore.id);
@@ -259,9 +276,9 @@ export function ProductCard({
       )}
 
       {moveDuplicateStoreName && (
-        <Modal title="買い物リスト" onClose={() => setMoveDuplicateStoreName(null)}>
+        <Modal title={t('nav.shoppingList')} onClose={() => setMoveDuplicateStoreName(null)}>
           <p className="confirm-dialog__message">
-            この商品は、すでに{moveDuplicateStoreName}の買い物リストへ登録されています。
+            {t('product.alreadyInListNamed', { store: moveDuplicateStoreName })}
           </p>
           <div className="form__actions">
             <button
@@ -269,20 +286,23 @@ export function ProductCard({
               className="btn btn--primary"
               onClick={() => setMoveDuplicateStoreName(null)}
             >
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </Modal>
       )}
 
       {movedNotice && (
-        <Modal title="買い物リスト" onClose={handleMovedNoticeClose}>
+        <Modal title={t('nav.shoppingList')} onClose={handleMovedNoticeClose}>
           <p className="confirm-dialog__message">
-            {movedNotice.productName}を{movedNotice.storeName}の買い物リストへ移動しました。
+            {t('product.movedNotice', {
+              name: movedNotice.productName,
+              store: movedNotice.storeName,
+            })}
           </p>
           <div className="form__actions">
             <button type="button" className="btn btn--primary" onClick={handleMovedNoticeClose}>
-              閉じる
+              {t('common.close')}
             </button>
           </div>
         </Modal>
