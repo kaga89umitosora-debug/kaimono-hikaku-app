@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Language, MessageKey, TranslateParams } from './types';
 import { I18nContext } from './i18nContextDefinition';
@@ -32,6 +32,13 @@ export function I18nProvider({
     setLanguageState(next);
     persistLanguage(next);
   }, []);
+
+  // 現在の表示言語を <html lang> に同期する(初回マウント時＋言語切替時)。
+  // index.html の静的な lang="en" を、実際に選択された言語で上書きするだけ。
+  // 保存値(khcui:lang)・切替ロジックには関与しない。
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const t = useCallback(
     (key: MessageKey, params?: TranslateParams) => translate(language, key, params),
